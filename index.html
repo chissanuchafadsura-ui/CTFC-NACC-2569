@@ -1012,7 +1012,8 @@
                     "Tel.": tel,
                     "ScorePhoto": scoreUrl,
                     "CertificatePhoto": certUrl,
-                    "Verification": "กำลังตรวจสอบ"
+                    "Verification": "กำลังตรวจสอบ",
+                    "Inspector": "-"
                 };
 
                 const { data, error } = await db.from('regis').insert([payload]);
@@ -1088,7 +1089,8 @@
                     "Tel.": tel,
                     "ScorePhoto": scoreUrl,
                     "CertificatePhoto": certUrl,
-                    "Verification": "กำลังตรวจสอบ"
+                    "Verification": "กำลังตรวจสอบ",
+                    "Inspector": "-"
                 };
 
                 const { error } = await db.from('regis').insert([payload]);
