@@ -537,9 +537,44 @@
         const getStdClass = (obj) => obj['Class'] || obj['class'] || obj['ระดับชั้น'] || '-';
         const getStdPhoto = (obj) => obj['Photo'] || obj['photo'] || obj['รูปภาพ'] || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
 
-        const getTchEmail = (obj) => obj['E – mail'] || obj['E-mail'] || obj['Email'] || obj['email'] || '';
+        const getTchEmail = (obj) => {
+            if (!obj) return '';
+            // 1. ลองดึงจากคีย์มาตรฐานทั่วไป
+            const direct = obj['E – mail'] || obj['E-mail'] || obj['E - mail'] || obj['Email'] || obj['email'];
+            if (direct && String(direct).trim() !== '') return String(direct).trim();
+            
+            // 2. ถ้าไม่พบ ให้ค้นหาคีย์ทั้งหมดแบบยืดหยุ่น (รองรับ space, en-dash, hyphen ทุกรูปแบบ)
+            for (let key of Object.keys(obj)) {
+                const normKey = key.toLowerCase().replace(/[\s\u2013\u2014\-\._]/g, '');
+                if (normKey === 'email' || normKey.includes('email') || normKey.includes('mail')) {
+                    if (obj[key] !== undefined && obj[key] !== null && String(obj[key]).trim() !== '') {
+                        return String(obj[key]).trim();
+                    }
+                }
+            }
+            return '';
+        };
+
         const getTchName = (obj) => obj['Name.'] || obj['Name'] || obj['name'] || obj['ชื่อ-สกุล'] || 'ไม่ระบุชื่อ';
         const getTchClass = (obj) => obj['Class'] || obj['class'] || obj['ระดับชั้น'] || '-';
+
+        // Helper สำหรับจัดรูปแบบชั้นเรียนให้เทียบตรงกันเสมอ (ตัด "ม." หรือช่องว่างออก)
+        const normalizeClass = (cls) => cls ? String(cls).replace(/^ม\./i, '').trim() : '';
+
+        // Store สำหรับเก็บข้อมูลชั่วคราวของ ป.ป.ช.สพฐ.น้อย เพื่อหลีกเลี่ยงปัญหา Inline JSON Stringify
+        window.naccDataStore = {};
+
+        // --- Helper สำหรับเปิด-ปิด Accordion ดรอปดาวน์ห้องเรียน ---
+        function toggleAccordion(contentId, chevronId) {
+            const content = document.getElementById(contentId);
+            const chevron = document.getElementById(chevronId);
+            if (content) {
+                content.classList.toggle('hidden');
+            }
+            if (chevron) {
+                chevron.classList.toggle('rotate-180');
+            }
+        }
 
         // --- Helper สำหรับดึงข้อมูลทั้งหมด (แก้ปัญหา Supabase จำกัดการดึงแค่ 1000 แถว) ---
         async function fetchAllRecords(tableName) {
@@ -622,84 +657,172 @@
                     return;
                 }
 
-                const classMap = {};
-                students.forEach(std => {
-                    const cls = getStdClass(std);
-                    if (!classMap[cls]) classMap[cls] = [];
-                    classMap[cls].push(std);
-                });
+                const regisIds = new Set((regis || []).map(r => getStdId(r)));
+                let subCount = 0;
+                students.forEach(s => { if (regisIds.has(getStdId(s))) subCount++; });
+                const totalCount = students.length;
+                const unSubCount = totalCount - subCount;
+                const percent = totalCount > 0 ? Math.round((subCount / totalCount) * 100) : 0;
 
-                const sortedClasses = Object.keys(classMap).sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-                list.innerHTML = '';
-                
-                const teacherObjMap = {};
+                // Map ครูตามระดับชั้น (รองรับครูประจำชั้นหลายคนในห้องเดียวกัน)
+                const teacherMap = {};
                 (teachers || []).forEach(t => {
-                    teacherObjMap[getTchClass(t)] = t;
+                    const c = getTchClass(t);
+                    if (c) {
+                        if (!teacherMap[c]) teacherMap[c] = [];
+                        teacherMap[c].push(t);
+                    }
                 });
-                
-                sortedClasses.forEach(cls => {
-                    const classStds = classMap[cls];
-                    const regisIds = new Set((regis || []).map(r => getStdId(r)));
-                    const regisEmails = new Set((regis || []).map(r => r['Student ID/E-mail']));
-                    let subCount = 0;
-                    
-                    classStds.forEach(s => { if (regisIds.has(getStdId(s))) subCount++; });
-                    const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
 
-                    const tObj = teacherObjMap[cls];
-                    const tName = tObj ? getTchName(tObj) : 'ไม่ระบุ';
-                    const tEmail = tObj ? getTchEmail(tObj) : null;
-                    const isTchSub = tEmail ? regisEmails.has(tEmail) : false;
+                // จัดกลุ่มนักเรียนตามห้อง
+                const classGroups = {};
+                students.forEach(s => {
+                    const cls = getStdClass(s) || 'ไม่ระบุ';
+                    if (!classGroups[cls]) classGroups[cls] = [];
+                    classGroups[cls].push(s);
+                });
 
-                    const tchStatusSpan = tObj ? 
-                        `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${isTchSub ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${isTchSub ? '✅ ส่งแล้ว' : '❌ ยังไม่ส่ง'}</span>` 
-                        : '';
+                // เรียงลำดับชั้นเรียน
+                const sortedClasses = Object.keys(classGroups).sort((a, b) => 
+                    a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})
+                );
 
-                    const tchRowHTML = tObj ? `
-                        <div class="flex justify-between items-center py-3 px-4 bg-purple-50 rounded-lg text-sm mb-3 border border-purple-100 shadow-sm">
-                            <span class="text-purple-800 font-bold"><i class="fa-solid fa-chalkboard-user text-purple-500 mr-2"></i>ครูที่ปรึกษา <span class="text-purple-300 mx-1">|</span> ${tName}</span>
-                            <span class="${isTchSub ? 'text-green-600 bg-green-100' : 'text-red-500 bg-red-100'} px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                                ${isTchSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                            </span>
-                        </div>
-                    ` : '';
+                // สร้าง Accordion ของแต่ละห้อง
+                let classAccordionHTML = '';
+                sortedClasses.forEach((cls, idx) => {
+                    const classStds = classGroups[cls];
+                    // เรียงนักเรียนตามเลขที่
+                    classStds.sort((a, b) => (parseInt(getStdNo(a)) || 0) - (parseInt(getStdNo(b)) || 0));
 
-                    const detailHTML = classStds.map(s => {
-                        const sId = getStdId(s);
-                        const isSub = regisIds.has(sId);
-                        return `
-                            <div class="flex justify-between items-center py-2 px-4 bg-gray-50 rounded-lg text-sm mb-2 border border-transparent hover:border-gray-200 transition">
-                                <span class="text-gray-700 font-medium">เลขที่ ${getStdNo(s)} <span class="text-gray-400 mx-1">|</span> รหัส ${sId} <span class="text-gray-400 mx-1">|</span> ${getStdName(s)}</span>
-                                <span class="${isSub ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50'} px-3 py-1 rounded-full text-xs font-bold shadow-sm">
-                                    ${isSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                                </span>
+                    let classSubCount = 0;
+                    classStds.forEach(s => { if (regisIds.has(getStdId(s))) classSubCount++; });
+                    const classPercent = classStds.length > 0 ? Math.round((classSubCount / classStds.length) * 100) : 0;
+
+                    // รายชื่อครูที่ปรึกษาประจำชั้น (แสดงทุกคน)
+                    const tchList = teacherMap[cls] || [];
+                    let tchHTML = '';
+                    if (tchList.length > 0) {
+                        tchHTML = tchList.map(tchObj => {
+                            const tchName = getTchName(tchObj);
+                            const tchEmail = getTchEmail(tchObj);
+                            const isTchSub = tchEmail ? (regis || []).some(r => getStdId(r) === tchEmail) : false;
+                            return `
+                                <div class="tch-item flex items-center justify-between p-3 bg-purple-50/60 rounded-xl border border-purple-200 transition shadow-sm mt-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-purple-main text-white flex items-center justify-center font-bold text-xs">
+                                            <i class="fa-solid fa-chalkboard-user"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-purple-900 text-sm">ครูที่ปรึกษา: ${tchName}</h4>
+                                        </div>
+                                    </div>
+                                    <span class="${isTchSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                        ${isTchSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        tchHTML = `
+                            <div class="tch-item flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 transition shadow-sm mt-2">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-xs">
+                                        <i class="fa-solid fa-chalkboard-user"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-gray-700 text-sm">ครูที่ปรึกษา: ไม่ระบุ</h4>
+                                    </div>
+                                </div>
                             </div>
                         `;
-                    }).join('');
+                    }
 
-                    const accordion = document.createElement('details');
-                    accordion.className = 'border border-gray-100 rounded-2xl bg-white overflow-hidden shadow-sm hover:shadow-md transition group';
-                    
-                    accordion.innerHTML = `
-                        <summary class="cursor-pointer p-5 font-bold text-purple-main bg-white flex justify-between items-center group-hover:bg-purple-50/50 transition flex-wrap gap-2">
-                            <span class="flex items-center gap-2">
-                                <i class="fa-solid fa-users text-gold-main"></i> มัธยมศึกษาปีที่ ${cls}
-                                <span class="text-xs font-normal text-gray-600 bg-purple-50 px-2 py-1 rounded-md border border-purple-100 ml-2 shadow-sm flex items-center">
-                                    <i class="fa-solid fa-chalkboard-user text-purple-400 mr-1"></i>ครูที่ปรึกษา: ${tName}
-                                    ${tchStatusSpan}
-                                </span>
-                            </span>
-                            <span class="text-sm bg-purple-100 text-purple-800 py-1.5 px-4 rounded-full border border-purple-200">
-                                นร. ส่งแล้ว ${percent}% (${subCount}/${classStds.length})
-                            </span>
-                        </summary>
-                        <div class="p-4 bg-white border-t border-gray-50">
-                            ${tchRowHTML}
-                            ${detailHTML}
+                    classAccordionHTML += `
+                        <div class="class-accordion-item border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm mb-3">
+                            <!-- Accordion Header (ปุ่มกดดรอปดาวน์) -->
+                            <button onclick="toggleAccordion('class-content-${idx}', 'chevron-${idx}')" class="w-full text-left p-4 bg-gradient-to-r from-purple-50/70 to-white hover:bg-purple-100/50 transition flex items-center justify-between gap-3 focus:outline-none">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-lg text-purple-main flex items-center gap-2">
+                                        <i class="fa-solid fa-users text-gold-main"></i> ${cls}
+                                    </span>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold px-3 py-1 rounded-full ${classPercent === 100 ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-purple-100 text-purple-800 border border-purple-200'}">
+                                        ส่งแล้ว ${classSubCount}/${classStds.length} คน (${classPercent}%)
+                                    </span>
+                                    <i id="chevron-${idx}" class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                                </div>
+                            </button>
+
+                            <!-- Accordion Content (ดร็อปลงมาแสดงข้อมูลนักเรียน + ครูที่ปรึกษาทุกคน) -->
+                            <div id="class-content-${idx}" class="hidden border-t border-gray-100 p-4 bg-gray-50/50 space-y-2">
+                                ${classStds.map(s => {
+                                    const sId = getStdId(s);
+                                    const isSub = regisIds.has(sId);
+                                    const name = getStdName(s);
+                                    const no = getStdNo(s);
+                                    return `
+                                        <div class="std-item flex items-center justify-between p-3 bg-white hover:bg-purple-50/30 rounded-xl border border-gray-100 transition shadow-sm">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-main flex items-center justify-center font-bold text-xs">
+                                                    ${no}
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-800 text-sm">${name}</h4>
+                                                    <p class="text-xs text-gray-500">${cls} | เลขที่ ${no} | รหัส: ${sId}</p>
+                                                </div>
+                                            </div>
+                                            <span class="${isSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                                ${isSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
+                                            </span>
+                                        </div>
+                                    `;
+                                }).join('')}
+
+                                <!-- แสดงครูที่ปรึกษาทุกคนในห้องนี้ -->
+                                <div class="pt-2">
+                                    ${tchHTML}
+                                </div>
+                            </div>
                         </div>
                     `;
-                    list.appendChild(accordion);
                 });
+
+                list.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div class="bg-purple-50 border border-purple-100 p-4 rounded-2xl flex items-center justify-between">
+                            <div>
+                                <p class="text-xs text-purple-600 font-medium">นักเรียนทั้งหมด</p>
+                                <p class="text-2xl font-bold text-purple-main">${totalCount} คน</p>
+                            </div>
+                            <div class="w-10 h-10 bg-purple-main text-white rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-users"></i>
+                            </div>
+                        </div>
+                        <div class="bg-green-50 border border-green-100 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+                            <div>
+                                <p class="text-xs text-green-600 font-medium">ส่งหลักฐานแล้ว</p>
+                                <p class="text-2xl font-bold text-green-600">${subCount} คน (${percent}%)</p>
+                            </div>
+                            <div class="w-10 h-10 bg-green-500 text-white rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-circle-check"></i>
+                            </div>
+                        </div>
+                        <div class="bg-red-50 border border-red-100 p-4 rounded-2xl flex items-center justify-between shadow-sm">
+                            <div>
+                                <p class="text-xs text-red-600 font-medium">ยังไม่ส่งหลักฐาน</p>
+                                <p class="text-2xl font-bold text-red-500">${unSubCount} คน</p>
+                            </div>
+                            <div class="w-10 h-10 bg-red-400 text-white rounded-xl flex items-center justify-center">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="dashboard-student-container">
+                        ${classAccordionHTML}
+                    </div>
+                `;
             } catch (err) {
                 console.error(err);
                 list.innerHTML = `
@@ -710,6 +833,43 @@
                         <p class="text-xs text-red-500 mt-2">โปรดตรวจสอบ API Key ปิด RLS แล้ว และตารางมีอยู่จริง</p>
                     </div>`;
             }
+        }
+
+        function filterDashboardStudents() {
+            const query = (document.getElementById('dashboard-search-input')?.value || '').toLowerCase().trim();
+            const accordions = document.querySelectorAll('.class-accordion-item');
+
+            accordions.forEach(acc => {
+                const items = acc.querySelectorAll('.std-item');
+                let hasMatch = false;
+
+                items.forEach(item => {
+                    const text = (item.getAttribute('data-search') || '').toLowerCase();
+                    if (!query || text.includes(query)) {
+                        item.classList.remove('hidden');
+                        hasMatch = true;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+
+                const content = acc.querySelector('[id^="class-content-"]');
+                const chevron = acc.querySelector('[id^="chevron-"]');
+
+                if (query) {
+                    if (hasMatch) {
+                        acc.classList.remove('hidden');
+                        if (content) content.classList.remove('hidden');
+                        if (chevron) chevron.classList.add('rotate-180');
+                    } else {
+                        acc.classList.add('hidden');
+                    }
+                } else {
+                    acc.classList.remove('hidden');
+                    if (content) content.classList.add('hidden');
+                    if (chevron) chevron.classList.remove('rotate-180');
+                }
+            });
         }
 
         // Handle Student Login
@@ -828,19 +988,46 @@
         // Teacher Login
         async function handleTeacherLogin(e) {
             e.preventDefault();
-            const email = document.getElementById('tch-login-email').value.trim();
-            const { data, error } = await db.from('data_teacher').select('*').ilike('E – mail', `%${email}%`).single();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+            btn.disabled = true;
 
-            if (error || !data) {
-                Swal.fire('ไม่พบข้อมูล', 'ไม่พบชื่อผู้ใช้งานนี้ในระบบบุคลากรครู', 'error');
-                return;
+            try {
+                const inputEmail = document.getElementById('tch-login-email').value.trim().toLowerCase();
+                const teachers = await fetchAllRecords('data_teacher');
+
+                if (!teachers || teachers.length === 0) {
+                    Swal.fire('ไม่พบข้อมูล', 'ไม่พบรายชื่อบุคลากรครูในตาราง data_teacher', 'error');
+                    return;
+                }
+
+                // ค้นหาครูโดยเปรียบเทียบยืดหยุ่น (ทั้งอีเมลเต็ม รหัสก่อน @ หรือข้อความส่วนหนึ่งของอีเมล)
+                const data = teachers.find(t => {
+                    const tEmail = getTchEmail(t).toLowerCase().trim();
+                    if (!tEmail) return false;
+                    const tPrefix = tEmail.split('@')[0].trim();
+                    const inputPrefix = inputEmail.split('@')[0].trim();
+                    return tEmail === inputEmail || tPrefix === inputPrefix || tEmail.includes(inputPrefix) || inputEmail.includes(tPrefix);
+                });
+
+                if (!data) {
+                    Swal.fire('ไม่พบข้อมูล', `ไม่พบชื่อผู้ใช้งาน "${inputEmail}" ในระบบบุคลากรครู`, 'error');
+                    return;
+                }
+
+                currentTeacherData = data;
+                switchView('teacher-form');
+                document.getElementById('tch-form-email').value = getTchEmail(data);
+                document.getElementById('tch-form-name').value = getTchName(data);
+                document.getElementById('tch-form-class').value = getTchClass(data);
+            } catch (err) {
+                console.error("Teacher Login Error:", err);
+                Swal.fire('เกิดข้อผิดพลาด', 'ไม่สามารถเชื่อมต่อฐานข้อมูลได้: ' + err.message, 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
             }
-
-            currentTeacherData = data;
-            switchView('teacher-form');
-            document.getElementById('tch-form-email').value = getTchEmail(data);
-            document.getElementById('tch-form-name').value = getTchName(data);
-            document.getElementById('tch-form-class').value = getTchClass(data);
         }
 
         // Submit Teacher
@@ -890,14 +1077,21 @@
             const select = document.getElementById('nacc-class-select');
             select.innerHTML = '';
             
-            const classes = [data['Class 1'], data['Class 2'], data['Class 3'], data['Class 4']].filter(Boolean);
-            if (classes.some(c => c.includes('ทุกห้อง'))) {
-                select.innerHTML += `<option value="all">ตรวจสอบทุกห้อง</option>`;
+            const rawClasses = [data['Class 1'], data['Class 2'], data['Class 3'], data['Class 4']].filter(Boolean);
+            if (rawClasses.some(c => String(c).includes('ทุกห้อง'))) {
                 const allStds = await fetchAllRecords('data_student');
-                const uniq = [...new Set((allStds || []).map(s => getStdClass(s)))].filter(c => c !== '-').sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-                uniq.forEach(c => select.innerHTML += `<option value="${c}">ตรวจสอบ ม.${c}</option>`);
+                const uniq = [...new Set((allStds || []).map(s => getStdClass(s)))]
+                    .filter(c => c !== '-')
+                    .sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+                uniq.forEach(c => {
+                    const cleanC = String(c).replace(/^ม\./i, '').trim();
+                    select.innerHTML += `<option value="${c}">ตรวจสอบ ${cleanC}</option>`;
+                });
             } else {
-                classes.forEach(c => select.innerHTML += `<option value="${c}">ตรวจสอบ ม.${c}</option>`);
+                rawClasses.forEach(c => {
+                    const cleanC = String(c).replace(/^ม\./i, '').trim();
+                    select.innerHTML += `<option value="${c}">ตรวจสอบ ${cleanC}</option>`;
+                });
             }
 
             switchView('nacc-admin');
@@ -909,6 +1103,8 @@
             const cls = document.getElementById('nacc-class-select').value;
             const grid = document.getElementById('nacc-students-grid');
             grid.innerHTML = '<p class="col-span-full text-center py-4"><i class="fa-solid fa-spinner fa-spin"></i> กำลังโหลดข้อมูลนักเรียน...</p>';
+            
+            window.naccDataStore = {}; // ล้างคลังข้อมูลชั่วคราว
 
             try {
                 const allStds = await fetchAllRecords('data_student');
@@ -920,59 +1116,78 @@
                     stds = allStds;
                     regis = allRegis;
                 } else {
-                    // กรองข้อมูลในฝั่ง JavaScript ตัดปัญหาชื่อคอลัมน์ไม่ตรง
-                    stds = allStds.filter(s => getStdClass(s) === cls);
-                    regis = allRegis.filter(r => getStdClass(r) === cls);
+                    const targetNorm = normalizeClass(cls);
+                    stds = allStds.filter(s => normalizeClass(getStdClass(s)) === targetNorm);
+                    regis = allRegis.filter(r => normalizeClass(getStdClass(r)) === targetNorm);
                 }
 
                 const rMap = {};
-                (regis || []).forEach(r => rMap[getStdId(r)] = r);
+                (allRegis || []).forEach(r => rMap[getStdId(r)] = r);
 
-                const teacherObjMap = {};
-                (allTchs || []).forEach(t => { teacherObjMap[getTchClass(t)] = t; });
+                // Map ครูประจำชั้นทั้งหมดของแต่ละห้อง
+                const teacherMap = {};
+                (allTchs || []).forEach(t => {
+                    const c = getStdClass(t) || getTchClass(t);
+                    const normC = normalizeClass(c);
+                    if (normC) {
+                        if (!teacherMap[normC]) teacherMap[normC] = [];
+                        teacherMap[normC].push(t);
+                    }
+                });
 
                 grid.innerHTML = '';
                 
-                if(!stds || stds.length===0){
-                    grid.innerHTML += '<p class="col-span-full text-center text-gray-500 py-4">ไม่พบรายชื่อนักเรียนในห้องนี้</p>';
+                if (!stds || stds.length === 0) {
+                    grid.innerHTML = '<p class="col-span-full text-center text-gray-500 py-4">ไม่พบรายชื่อนักเรียนในห้องนี้</p>';
                     return;
                 }
 
-                // จัดกลุ่มนักเรียนตามห้อง
                 const classGroup = {};
                 stds.forEach(s => {
-                    const c = getStdClass(s);
-                    if(!classGroup[c]) classGroup[c] = [];
-                    classGroup[c].push(s);
+                    const rawC = getStdClass(s);
+                    if (!classGroup[rawC]) classGroup[rawC] = [];
+                    classGroup[rawC].push(s);
                 });
 
                 const sortedClasses = Object.keys(classGroup).sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
-                // สร้างหัวข้อแต่ละห้อง และตามด้วยรายชื่อนักเรียน
                 sortedClasses.forEach(c => {
                     const classStds = classGroup[c];
-                    let subCount = 0;
-                    classStds.forEach(s => { if(rMap[getStdId(s)]) subCount++; });
-                    
-                    const tObj = teacherObjMap[c];
-                    const tName = tObj ? getTchName(tObj) : 'ไม่ระบุ';
-                    const tEmail = tObj ? getTchEmail(tObj) : null;
-                    const isTchSub = tEmail ? allRegis.some(r => r['Student ID/E-mail'] === tEmail) : false;
+                    classStds.sort((a, b) => (parseInt(getStdNo(a)) || 0) - (parseInt(getStdNo(b)) || 0));
 
-                    const tchStatusSpan = tObj ? 
-                        `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${isTchSub ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${isTchSub ? '✅ ส่งแล้ว' : '❌ ยังไม่ส่ง'}</span>` 
-                        : '';
+                    let subCount = 0;
+                    classStds.forEach(s => { if (rMap[getStdId(s)]) subCount++; });
+                    
+                    const normC = normalizeClass(c);
+                    const tchList = teacherMap[normC] || [];
+                    let tchInfoHTML = '';
+                    if (tchList.length > 0) {
+                        tchInfoHTML = tchList.map(tObj => {
+                            const tName = getTchName(tObj);
+                            const tEmail = getTchEmail(tObj);
+                            const isTchSub = tEmail ? (allRegis || []).some(r => r['Student ID/E-mail'] === tEmail || r['Studen ID'] === tEmail) : false;
+                            return `
+                                <span class="text-xs bg-white text-gray-700 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center">
+                                    <i class="fa-solid fa-chalkboard-user text-purple-400 mr-1"></i> ครูที่ปรึกษา: ${tName}
+                                    <span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${isTchSub ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${isTchSub ? '✅ ส่งแล้ว' : '❌ ยังไม่ส่ง'}</span>
+                                </span>
+                            `;
+                        }).join(' ');
+                    } else {
+                        tchInfoHTML = `
+                            <span class="text-xs bg-white text-gray-700 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center">
+                                <i class="fa-solid fa-chalkboard-user text-purple-400 mr-1"></i> ครูที่ปรึกษา: ไม่ระบุ
+                            </span>
+                        `;
+                    }
 
                     const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
 
                     grid.innerHTML += `
                         <div class="col-span-full mt-4 mb-2 bg-gradient-to-r from-purple-50 to-white text-purple-main font-bold p-4 rounded-xl border border-purple-100 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
-                            <div class="flex items-center flex-wrap gap-3">
-                                <span class="text-lg"><i class="fa-solid fa-users text-gold-main"></i> ม.${c}</span>
-                                <span class="text-sm bg-white text-gray-700 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center">
-                                    <i class="fa-solid fa-chalkboard-user text-purple-400 mr-1"></i> ครูที่ปรึกษา: ${tName}
-                                    ${tchStatusSpan}
-                                </span>
+                            <div class="flex items-center flex-wrap gap-2">
+                                <span class="text-lg mr-2"><i class="fa-solid fa-users text-gold-main"></i> ${c}</span>
+                                ${tchInfoHTML}
                             </div>
                             <span class="text-sm bg-purple-100 text-purple-800 py-1.5 px-4 rounded-full border border-purple-200 shadow-sm whitespace-nowrap">
                                 นร. ส่งแล้ว ${percent}% (${subCount}/${classStds.length} คน)
@@ -982,9 +1197,14 @@
 
                     classStds.forEach(s => {
                         const sId = getStdId(s);
-                        const isSub = !!rMap[sId];
+                        const regItem = rMap[sId] || null;
+                        const isSub = !!regItem;
+                        
+                        // เก็บข้อมูลไว้ใน Store โดยใช้ sId ป้องกัน Inline JSON syntax error
+                        window.naccDataStore[sId] = { student: s, regis: regItem };
+
                         grid.innerHTML += `
-                            <div onclick='openNaccModal(${JSON.stringify(s).replace(/'/g, "&#39;")}, ${JSON.stringify(rMap[sId]||null).replace(/'/g, "&#39;")})' 
+                            <div onclick="handleNaccCardClick('${sId}')" 
                                  class="bg-white border ${isSub ? 'border-purple-200 hover:border-purple-400' : 'border-gray-200'} rounded-2xl p-4 flex items-center justify-between shadow-sm cursor-pointer hover:shadow-md transition transform hover:-translate-y-1 relative overflow-hidden group">
                                 
                                 ${isSub ? '<div class="absolute top-0 left-0 w-1 h-full bg-green-500"></div>' : '<div class="absolute top-0 left-0 w-1 h-full bg-red-400"></div>'}
@@ -1005,7 +1225,15 @@
                 });
             } catch (err) {
                 console.error(err);
-                grid.innerHTML = '<p class="col-span-full text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+                grid.innerHTML = '<p class="col-span-full text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล: ' + err.message + '</p>';
+            }
+        }
+
+        // Helper สำหรับคลิกการ์ด NACC อย่างปลอดภัย
+        function handleNaccCardClick(sId) {
+            const data = window.naccDataStore[sId];
+            if (data) {
+                openNaccModal(data.student, data.regis);
             }
         }
 
