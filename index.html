@@ -4,75 +4,787 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ระบบทะเบียนเกียรติบัตรการอบรมหลักสูตรต้านทุจริตศึกษา</title>
-    <link rel="icon" href="https://score.phukhieo.ac.th/helper/img/pklogo.png">
-    <link rel="stylesheet" href="style.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="https://score.phukhieo.ac.th/helper/img/pklogo.png" type="image/png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Supabase JS -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            purple: '#4c1d95', // สีม่วงเข้ม
+                            lightpurple: '#ede9fe',
+                            gold: '#ca8a04', // สีทอง
+                            white: '#ffffff'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Sarabun', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Sarabun', sans-serif; background-color: #f9fafb; }
+        .logo-glow { filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.7)); }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
 </head>
 <body>
-    <header class="header-container">
-        <div class="logo-container">
-            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Emblem_of_the_National_Anti-Corruption_Commission_Thailand.svg/960px-Emblem_of_the_National_Anti-Corruption_Commission_Thailand.svg.png" alt="NACC Logo" class="logo">
-            <img src="https://www.kruchiangrai.net/wp-content/uploads/2024/02/%E0%B8%AA%E0%B8%9E%E0%B8%90.1-%E0%B8%82%E0%B8%AD%E0%B8%9A%E0%B8%82%E0%B8%B2%E0%B8%A7.webp" alt="OBEC Logo" class="logo">
-            <img src="https://score.phukhieo.ac.th/helper/img/pklogo.png" alt="PK Logo" class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmp0eh7_RSBKmHvK2EDeUUJRYIxCXHjYZNr2MDSJr0KSTBWauKtC8aFUnd&s=10" alt="Logo 4" class="logo">
-            <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRyqP5dd2_-JXf02g8wFMy11ShZ5rEFvWlN315F4fu-u15imn4c3bOwvo&s=10" alt="Logo 5" class="logo">
-        </div>
-        <div class="title-container">
-            <h2>ระบบทะเบียนเกียรติบัตรการอบรมหลักสูตรต้านทุจริตศึกษา</h2>
-            <h3>โรงเรียนภูเขียว<br>สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาชัยภูมิ</h3>
-            <p class="description">คำอธิบาย: ให้นักเรียนทุกท่านอัปโหลดหลักฐานการเข้าอบรม/ทดสอบ หลักสูตรต้านทุจริตศึกษา เพื่อใช้หลักฐานการอบรม/ทดสอบในครั้งนี้ เป็นการสอบปลายภาค ของภาคเรียนที่ 1 ปีการศึกษา 2569</p>
-        </div>
-    </header>
+    <div id="root"></div>
 
-    <main class="main-content">
-        <div id="main-menu" class="view-section active">
-            <button onclick="showSection('student-login')" class="btn-primary">1. เข้าสู่ระบบนักเรียน</button>
-            <button onclick="showSection('teacher-login')" class="btn-primary">2. เข้าสู่ระบบครู</button>
-            <button onclick="showSection('nacc-login')" class="btn-primary">3. เข้าสู่ระบบ ป.ป.ช.สพฐ.น้อย</button>
-            
-            <div class="dashboard-section">
-                <h3>Dashboard ข้อมูลการส่ง</h3>
-                <select id="dashboard-class-select">
-                    <option value="">-- เลือกระดับชั้น --</option>
-                    <option value="m1">ม.1 (75%)</option>
-                    <option value="m2">ม.2 (60%)</option>
-                </select>
-            </div>
-        </div>
+    <script type="text/babel">
+        const SUPABASE_URL = 'https://wmcplpmmubrofsgqialj.supabase.co';
+        const SUPABASE_KEY = 'sb_publishable_zyXW-H-i2vTOewlb66haNw_oT5c83qX';
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        <div id="student-login" class="view-section">
-            <h3>เข้าสู่ระบบนักเรียน</h3>
-            <input type="text" id="student-id-login" placeholder="รหัสนักเรียน 5 หลัก" maxlength="5">
-            <input type="text" id="student-nid-login" placeholder="เลขประจำตัวประชาชน 13 หลัก" oninput="formatNID(this)">
-            <button onclick="loginStudent()" class="btn-secondary">เข้าสู่ระบบ</button>
-            <button onclick="showSection('main-menu')" class="btn-back">กลับหน้าหลัก</button>
-        </div>
+        const LOGOS = [
+            "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Emblem_of_the_National_Anti-Corruption_Commission_Thailand.svg/960px-Emblem_of_the_National_Anti-Corruption_Commission_Thailand.svg.png",
+            "https://www.kruchiangrai.net/wp-content/uploads/2024/02/%E0%B8%AA%E0%B8%9E%E0%B8%90.1-%E0%B8%82%E0%B8%AD%E0%B8%9A%E0%B8%82%E0%B8%B2%E0%B8%A7.webp",
+            "https://score.phukhieo.ac.th/helper/img/pklogo.png",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmp0eh7_RSBKmHvK2EDeUUJRYIxCXHjYZNr2MDSJr0KSTBWauKtC8aFUnd&s=10",
+            "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRyqP5dd2_-JXf02g8wFMy11ShZ5rEFvWlN315F4fu-u15imn4c3bOwvo&s=10"
+        ];
 
-        <div id="student-form" class="view-section">
-            <h3>ข้อมูลนักเรียนและการอัปโหลดหลักฐาน</h3>
-            <div id="student-info-display">
+        const formatIdCard = (value) => {
+            const v = value.replace(/\D/g, '');
+            const match = v.match(/^(\d{0,1})(\d{0,4})(\d{0,5})(\d{0,2})(\d{0,1})$/);
+            if (!match) return v;
+            return !match[2] ? match[1] : `${match[1]}-${match[2]}${match[3] ? `-${match[3]}` : ''}${match[4] ? `-${match[4]}` : ''}${match[5] ? `-${match[5]}` : ''}`;
+        };
+
+        const fileToBase64 = (file) => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        };
+
+        const getDriveUrl = (id) => `https://lh3.googleusercontent.com/d/${id}`;
+
+        const App = () => {
+            const [view, setView] = React.useState('home'); 
+            const [currentUser, setCurrentUser] = React.useState(null);
+            const [regisData, setRegisData] = React.useState(null);
+            const [loading, setLoading] = React.useState(false);
+            const [role, setRole] = React.useState(''); // student, teacher, nacc
+
+            const Header = () => (
+                <div className="bg-white w-full shadow-sm border-b-4 border-brand-gold">
+                    <div className="max-w-7xl mx-auto px-4 py-4">
+                        <div className="flex flex-wrap justify-center items-center gap-4 md:gap-8 mb-4">
+                            {LOGOS.map((src, idx) => (
+                                <img key={idx} src={src} alt={`Logo ${idx+1}`} className="h-16 md:h-20 object-contain logo-glow" />
+                            ))}
+                        </div>
+                        <div className="text-center text-brand-purple">
+                            <h1 className="text-2xl md:text-3xl font-bold mb-1">ระบบทะเบียนเกียรติบัตรการอบรมหลักสูตรต้านทุจริตศึกษา</h1>
+                            <h2 className="text-xl md:text-2xl font-semibold">โรงเรียนภูเขียว สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาชัยภูมิ</h2>
+                        </div>
+                    </div>
                 </div>
-            <input type="text" id="student-tel" placeholder="เบอร์โทรศัพท์ (10 หลัก)" maxlength="10">
-            
-            <label>ภาพหน้าคะแนน:</label>
-            <input type="file" id="score-photo" accept="image/*">
-            <p class="hint">ตัวอย่าง: <a href="#" target="_blank">ดูตัวอย่างภาพหน้าคะแนน</a></p>
+            );
 
-            <label>ภาพเกียรติบัตร:</label>
-            <input type="file" id="cert-photo" accept="image/*">
-            <p class="hint">ตัวอย่าง: <a href="#" target="_blank">ดูตัวอย่างภาพเกียรติบัตร</a></p>
+            const Footer = () => (
+                <div className="bg-white border-t border-gray-200 mt-12 py-6 text-center text-sm text-gray-500">
+                    <p>©CTFC NACC – OBEC - JUNIOR REGIS 2026 ALLRIGHT RESERVED</p>
+                    <a href="https://www.instagram.com/big_chissanucha_pk?igsh=MWNvZGJydTk1cGJh" target="_blank" className="text-brand-gold font-semibold hover:underline mt-1 block">
+                        Dev_Chissanucha Fadsura
+                    </a>
+                </div>
+            );
 
-            <button onclick="submitStudentData()" class="btn-primary">บันทึกข้อมูล</button>
-            <button onclick="showSection('main-menu')" class="btn-back">ออกจากระบบ</button>
-        </div>
+            const HomeView = () => {
+                const [dashboardData, setDashboardData] = React.useState([]);
+                const [expandedClass, setExpandedClass] = React.useState(null);
+                const [loadingDash, setLoadingDash] = React.useState(true);
 
-        </main>
+                React.useEffect(() => {
+                    const fetchDashboard = async () => {
+                        setLoadingDash(true);
+                        // ดึงข้อมูลจากฐานข้อมูลจริง
+                        const { data: studentsData } = await supabase.from('data_student').select('*');
+                        const { data: regisData } = await supabase.from('regis').select('*');
+                        
+                        if (studentsData) {
+                            // หากลุ่มระดับชั้นทั้งหมด
+                            const uniqueClasses = [...new Set(studentsData.map(s => s.Class))].sort();
+                            
+                            const dData = uniqueClasses.map(c => {
+                                const studentsInClass = studentsData.filter(s => s.Class === c)
+                                                                    .sort((a, b) => a["No."] - b["No."]);
+                                const regisInClass = regisData ? regisData.filter(r => r.Class === c) : [];
+                                const pct = studentsInClass.length ? Math.round((regisInClass.length / studentsInClass.length) * 100) : 0;
+                                
+                                const list = studentsInClass.map(s => {
+                                    // เทียบ Studen ID จาก regis
+                                    const isRegis = regisData ? regisData.find(r => r["Studen ID"] == s["Student ID"] || r["Student ID/E-mail"] == s["Student ID"]) : null;
+                                    return { ...s, status: isRegis ? 'ส่งข้อมูลแล้ว' : 'ยังไม่ส่งข้อมูล' };
+                                });
 
-    <footer>
-        <p>©CTFC NACC – OBEC - JUNIOR REGIS 2026 ALLRIGHT RESERVED</p>
-        <p><a href="https://www.instagram.com/big_chissanucha_pk?igsh=MWNvZGJydTk1cGJh" target="_blank" class="dev-link">Dev_Chissanucha Fadsura</a></p>
-    </footer>
+                                return { className: c, percent: pct, students: list };
+                            });
+                            setDashboardData(dData);
+                        }
+                        setLoadingDash(false);
+                    };
+                    fetchDashboard();
+                }, []);
 
-    <script src="app.js"></script>
+                return (
+                    <div className="max-w-4xl mx-auto p-4 animate-fadeIn">
+                        <div className="bg-white rounded-xl shadow-lg p-6 mb-8 border-t-4 border-brand-purple">
+                            <p className="text-gray-700 text-center leading-relaxed font-medium">
+                                <span className="text-brand-purple font-bold">คำอธิบาย:</span> ให้นักเรียนทุกท่านอัปโหลดหลักฐานการเข้าอบรม/ทดสอบ หลักสูตรต้านทุจริตศึกษา เพื่อใช้หลักฐานการอบรม/ทดสอบในครั้งนี้ เป็นการสอบปลายภาค ของภาคเรียนที่ 1 ปีการศึกษา 2569
+                            </p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-12">
+                            <button onClick={() => setView('login-student')} className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-brand-purple transition-all group">
+                                <div className="w-16 h-16 bg-brand-lightpurple rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <i data-lucide="user" className="w-8 h-8 text-brand-purple"></i>
+                                </div>
+                                <span className="font-semibold text-lg text-gray-800">1. เข้าสู่ระบบนักเรียน</span>
+                            </button>
+                            <button onClick={() => setView('login-teacher')} className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-brand-gold transition-all group">
+                                <div className="w-16 h-16 bg-yellow-50 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <i data-lucide="users" className="w-8 h-8 text-brand-gold"></i>
+                                </div>
+                                <span className="font-semibold text-lg text-gray-800">2. เข้าสู่ระบบครู</span>
+                            </button>
+                            <button onClick={() => setView('login-nacc')} className="flex flex-col items-center justify-center p-6 bg-white border border-gray-200 rounded-xl shadow-sm hover:shadow-md hover:border-brand-purple transition-all group">
+                                <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <i data-lucide="shield-check" className="w-8 h-8 text-gray-700"></i>
+                                </div>
+                                <span className="font-semibold text-lg text-gray-800">3. เข้าสู่ระบบ ป.ป.ช.สพฐ.น้อย</span>
+                            </button>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                            <div className="bg-brand-purple text-white p-4 flex items-center gap-2">
+                                <i data-lucide="layout-dashboard"></i>
+                                <h3 className="text-xl font-bold">Dashboard สถานะการส่งข้อมูล</h3>
+                            </div>
+                            <div className="divide-y divide-gray-100">
+                                {loadingDash ? (
+                                    <div className="p-8 text-center text-gray-500">กำลังโหลดข้อมูล...</div>
+                                ) : (
+                                    dashboardData.map((d, idx) => (
+                                        <div key={idx} className="w-full">
+                                            <button 
+                                                onClick={() => setExpandedClass(expandedClass === d.className ? null : d.className)}
+                                                className="w-full flex justify-between items-center p-4 hover:bg-gray-50 transition-colors"
+                                            >
+                                                <span className="font-semibold text-lg text-gray-800">{d.className}</span>
+                                                <div className="flex items-center gap-4">
+                                                    <span className={`px-3 py-1 rounded-full text-sm font-bold ${d.percent === 100 ? 'bg-green-100 text-green-700' : 'bg-brand-lightpurple text-brand-purple'}`}>
+                                                        ส่งแล้ว {d.percent}%
+                                                    </span>
+                                                    <i data-lucide={expandedClass === d.className ? "chevron-up" : "chevron-down"} className="text-gray-400"></i>
+                                                </div>
+                                            </button>
+                                            
+                                            {expandedClass === d.className && (
+                                                <div className="bg-gray-50 p-4 border-t border-gray-100">
+                                                    <div className="overflow-x-auto">
+                                                        <table className="w-full text-sm text-left">
+                                                            <thead className="text-gray-500 font-semibold border-b border-gray-200">
+                                                                <tr>
+                                                                    <th className="py-2">เลขที่</th>
+                                                                    <th>รหัสนักเรียน</th>
+                                                                    <th>ชื่อ - สกุล</th>
+                                                                    <th>สถานะ</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {d.students.map((st, i) => (
+                                                                    <tr key={i} className="border-b border-gray-100 last:border-0">
+                                                                        <td className="py-2">{st["No."]}</td>
+                                                                        <td>{st["Student ID"]}</td>
+                                                                        <td>{st.Name}</td>
+                                                                        <td className={`font-semibold ${st.status === 'ส่งข้อมูลแล้ว' ? 'text-green-600' : 'text-red-500'}`}>
+                                                                            {st.status}
+                                                                        </td>
+                                                                    </tr>
+                                                                ))}
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const LoginStudent = () => {
+                const [studentId, setStudentId] = React.useState('');
+                const [idCard, setIdCard] = React.useState('');
+                const [error, setError] = React.useState('');
+
+                const handleLogin = async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    setError('');
+                    
+                    try {
+                        const { data: student, error: fetchErr } = await supabase
+                            .from('data_student')
+                            .select('*')
+                            .eq('Student ID', studentId)
+                            .single();
+
+                        if (student) {
+                            // เช็คว่าเคยกรอกหรือยัง
+                            const { data: alreadyRegis } = await supabase
+                                .from('regis')
+                                .select('*')
+                                .eq('Studen ID', studentId)
+                                .single();
+
+                            student.rawIdCard = idCard.replace(/-/g, '');
+                            setCurrentUser(student);
+                            setRole('student');
+
+                            if (alreadyRegis) {
+                                setRegisData(alreadyRegis);
+                                setView('status-student');
+                            } else {
+                                setView('form-student');
+                            }
+                        } else {
+                            setError('ไม่พบข้อมูลนักเรียน กรุณาตรวจสอบรหัสอีกครั้ง');
+                        }
+                    } catch (err) {
+                        setError('เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล');
+                    }
+                    setLoading(false);
+                };
+
+                return (
+                    <div className="max-w-md mx-auto p-4 pt-12 animate-fadeIn">
+                        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                            <div className="bg-brand-purple p-6 text-center text-white">
+                                <h2 className="text-2xl font-bold">เข้าสู่ระบบนักเรียน</h2>
+                                <p className="text-brand-lightpurple mt-1 opacity-80">สำหรับอัปโหลดผลการอบรม</p>
+                            </div>
+                            <form onSubmit={handleLogin} className="p-6 space-y-4">
+                                {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">รหัสนักเรียน (5 หลัก)</label>
+                                    <input type="text" maxLength="5" required value={studentId} onChange={e => setStudentId(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-purple outline-none" 
+                                        placeholder="เช่น 37846" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">เลขประจำตัวประชาชน (13 หลัก)</label>
+                                    <input type="text" maxLength="17" required value={idCard} onChange={e => setIdCard(formatIdCard(e.target.value))}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-purple outline-none" 
+                                        placeholder="#-####-#####-##-#" />
+                                </div>
+                                <div className="pt-4 flex gap-3">
+                                    <button type="button" onClick={() => setView('home')} className="w-1/3 px-4 py-3 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50">กลับ</button>
+                                    <button type="submit" disabled={loading} className="w-2/3 bg-brand-gold text-white font-bold py-3 px-4 rounded-lg hover:bg-yellow-600">
+                                        {loading ? 'กำลังโหลด...' : 'เข้าสู่ระบบ'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const LoginTeacher = () => {
+                const [email, setEmail] = React.useState('');
+                const [error, setError] = React.useState('');
+
+                const handleLogin = async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    setError('');
+                    
+                    try {
+                        const searchEmail = email.includes('@') ? email : `${email}@phukhieo.ac.th`;
+                        const searchPrefix = email.split('@')[0];
+
+                        const { data: teacher, error: fetchErr } = await supabase
+                            .from('data_teacher')
+                            .select('*')
+                            .ilike('E - mail', `${searchPrefix}%`)
+                            .single();
+
+                        if (teacher) {
+                            setCurrentUser({...teacher, loginEmail: email});
+                            setRole('teacher');
+
+                            const { data: alreadyRegis } = await supabase
+                                .from('regis')
+                                .select('*')
+                                .eq('Student ID/E-mail', teacher['E - mail'])
+                                .single();
+
+                            if (alreadyRegis) {
+                                setRegisData(alreadyRegis);
+                                setView('status-student'); // ใช้หน้าสถานะร่วมกัน
+                            } else {
+                                setView('form-teacher');
+                            }
+                        } else {
+                            setError('ไม่พบข้อมูลครู กรุณาตรวจสอบ E-mail อีกครั้ง');
+                        }
+                    } catch (err) {
+                        setError('เกิดข้อผิดพลาด หรือไม่พบข้อมูลในระบบ');
+                    }
+                    setLoading(false);
+                };
+
+                return (
+                    <div className="max-w-md mx-auto p-4 pt-12 animate-fadeIn">
+                        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-brand-gold">
+                            <div className="bg-yellow-50 p-6 text-center">
+                                <h2 className="text-2xl font-bold text-brand-gold">เข้าสู่ระบบครู</h2>
+                            </div>
+                            <form onSubmit={handleLogin} className="p-6 space-y-4">
+                                {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">E-mail (Username)</label>
+                                    <input type="text" required value={email} onChange={e => setEmail(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-gold outline-none" 
+                                        placeholder="เช่น somchai (ไม่ต้องพิมพ์ @... ก็ได้)" />
+                                </div>
+                                <div className="pt-4 flex gap-3">
+                                    <button type="button" onClick={() => setView('home')} className="w-1/3 px-4 py-3 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50">กลับ</button>
+                                    <button type="submit" disabled={loading} className="w-2/3 bg-brand-gold text-white font-bold py-3 px-4 rounded-lg hover:bg-yellow-600">
+                                        {loading ? 'กำลังโหลด...' : 'เข้าสู่ระบบ'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const SubmissionForm = () => {
+                const [tel, setTel] = React.useState('');
+                const [scorePhoto, setScorePhoto] = React.useState(null);
+                const [certPhoto, setCertPhoto] = React.useState(null);
+
+                const handleSubmit = async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    
+                    try {
+                        const base64Score = await fileToBase64(scorePhoto);
+                        const base64Cert = await fileToBase64(certPhoto);
+
+                        let payload = {};
+                        if (role === 'student') {
+                            payload = {
+                                "Photo": currentUser.Photo,
+                                "Studen ID": currentUser["Student ID"], // ตามที่คุณกำหนด
+                                "ID": currentUser.rawIdCard, // แบบไม่มี -
+                                "No.": currentUser["No."],
+                                "Name": currentUser.Name,
+                                "Class": currentUser.Class,
+                                "Tel.": tel,
+                                "ScorePhoto": base64Score,
+                                "CertificatePhoto": base64Cert,
+                                "Score": null,
+                                "Verification": "กำลังตรวจสอบ",
+                                "Inspector": "-"
+                            };
+                        } else {
+                            payload = {
+                                "Student ID/E-mail": currentUser.loginEmail,
+                                "Name": currentUser.Name,
+                                "Class": currentUser.Class,
+                                "Tel.": tel,
+                                "ScorePhoto": base64Score,
+                                "CertificatePhoto": base64Cert,
+                                "Verification": "กำลังตรวจสอบ",
+                                "Inspector": "-"
+                            };
+                        }
+
+                        const { error } = await supabase.from('regis').insert([payload]);
+                        
+                        if (error) throw error;
+
+                        setRegisData(payload);
+                        setView('status-student');
+                    } catch (err) {
+                        alert("เกิดข้อผิดพลาดในการบันทึกข้อมูล: " + err.message);
+                    }
+                    setLoading(false);
+                };
+
+                return (
+                    <div className="max-w-2xl mx-auto p-4 animate-fadeIn">
+                        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                            <div className={`${role === 'student' ? 'bg-brand-purple text-white' : 'bg-brand-gold text-white'} p-6 flex justify-between items-center`}>
+                                <h2 className="text-2xl font-bold">ฟอร์มส่งหลักฐาน ({role === 'student' ? 'นักเรียน' : 'ครู'})</h2>
+                                <button onClick={() => setView('home')} className="hover:opacity-80"><i data-lucide="x-circle"></i></button>
+                            </div>
+                            
+                            <div className="p-6 border-b border-gray-100 flex items-center gap-6">
+                                {role === 'student' && <img src={currentUser.Photo} alt="Profile" className="w-24 h-24 rounded-full border-4 border-gray-100 object-cover" />}
+                                <div>
+                                    {role === 'student' && <p className="text-gray-500 text-sm">เลขที่ {currentUser["No."]} | รหัสนักเรียน: {currentUser["Student ID"]}</p>}
+                                    {role === 'teacher' && <p className="text-gray-500 text-sm">E-mail: {currentUser["E - mail"]}</p>}
+                                    <h3 className="text-2xl font-bold text-gray-800">{currentUser.Name}</h3>
+                                    <p className="text-brand-purple font-semibold">ชั้น {currentUser.Class}</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleSubmit} className="p-6 space-y-6 bg-gray-50">
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">เบอร์โทรศัพท์ (10 หลัก)</label>
+                                    <input type="text" maxLength="10" required value={tel} onChange={e => setTel(e.target.value.replace(/\D/g, ''))}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-brand-purple outline-none" 
+                                        placeholder="เช่น 0123456789" />
+                                </div>
+
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">อัปโหลดภาพหน้าคะแนน</label>
+                                    <div className="text-sm text-gray-500 mb-2">ตัวอย่างภาพที่ถูกต้อง: <a href={getDriveUrl('185zo8ube_2cwCqIjoH8UG_rbjnHB9j3n')} target="_blank" className="text-blue-600 underline font-semibold">ดูตัวอย่าง</a></div>
+                                    <input type="file" accept="image/*" required onChange={e => setScorePhoto(e.target.files[0])}
+                                        className="w-full bg-white px-4 py-3 rounded-lg border border-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-lightpurple file:text-brand-purple hover:file:bg-purple-200" />
+                                </div>
+
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">อัปโหลดภาพเกียรติบัตร</label>
+                                    <div className="text-sm text-gray-500 mb-2">ตัวอย่างภาพที่ถูกต้อง: <a href={getDriveUrl('1S6WzJiepwWHjrgKP8WpTvrp-UWFq-FYw')} target="_blank" className="text-blue-600 underline font-semibold">ดูตัวอย่าง</a></div>
+                                    <input type="file" accept="image/*" required onChange={e => setCertPhoto(e.target.files[0])}
+                                        className="w-full bg-white px-4 py-3 rounded-lg border border-gray-300 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-brand-lightpurple file:text-brand-purple hover:file:bg-purple-200" />
+                                </div>
+
+                                <button type="submit" disabled={loading} className={`w-full text-white font-bold py-4 rounded-xl shadow-lg transition-all text-lg mt-8 ${role === 'student' ? 'bg-brand-purple hover:bg-purple-800' : 'bg-brand-gold hover:bg-yellow-600'}`}>
+                                    {loading ? 'กำลังบันทึกข้อมูล...' : 'บันทึกข้อมูล'}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const SubmissionStatus = () => (
+                <div className="max-w-2xl mx-auto p-4 pt-8 animate-fadeIn">
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-t-8 border-green-500 text-center p-8">
+                        <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <i data-lucide="check-circle" className="w-12 h-12 text-green-500"></i>
+                        </div>
+                        <h2 className="text-3xl font-bold text-gray-800 mb-2">ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น</h2>
+                        <p className="text-gray-500 mb-8">{regisData.Name}</p>
+
+                        {regisData.CertificatePhoto && (
+                            <div className="mb-6">
+                                <img src={regisData.CertificatePhoto} alt="Certificate" className="max-h-64 mx-auto rounded-lg shadow-sm border" />
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4 text-left bg-gray-50 p-6 rounded-xl border border-gray-100">
+                            <div className="col-span-2 md:col-span-1">
+                                <p className="text-sm text-gray-500">คะแนนที่ได้</p>
+                                <p className="text-2xl font-bold text-brand-purple">{regisData.Score || '-'} %</p>
+                            </div>
+                            <div className="col-span-2 md:col-span-1">
+                                <p className="text-sm text-gray-500">สถานะการตรวจสอบ</p>
+                                <p className={`text-xl font-bold ${regisData.Verification === 'ผ่าน' ? 'text-green-600' : regisData.Verification === 'ไม่ผ่าน' ? 'text-red-500' : 'text-yellow-600'}`}>
+                                    {regisData.Verification || 'กำลังตรวจสอบ'}
+                                </p>
+                            </div>
+                        </div>
+
+                        <button onClick={() => setView('home')} className="mt-8 px-8 py-3 bg-gray-200 text-gray-700 font-bold rounded-lg hover:bg-gray-300 transition-colors">
+                            กลับหน้าหลัก
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const LoginNacc = () => {
+                const [username, setUsername] = React.useState('');
+                const [password, setPassword] = React.useState('');
+                const [error, setError] = React.useState('');
+
+                const handleLogin = async (e) => {
+                    e.preventDefault();
+                    setLoading(true);
+                    setError('');
+                    
+                    try {
+                        const { data: naccUser, error: fetchErr } = await supabase
+                            .from('data_NACC')
+                            .select('*')
+                            .eq('Username', username)
+                            .eq('Password', password)
+                            .single();
+
+                        if (naccUser) {
+                            setCurrentUser(naccUser);
+                            setRole('nacc');
+                            setView('nacc-dash');
+                        } else {
+                            setError('Username หรือ Password ไม่ถูกต้อง');
+                        }
+                    } catch (err) {
+                        setError('เกิดข้อผิดพลาดในการเชื่อมต่อระบบ ป.ป.ช.');
+                    }
+                    setLoading(false);
+                };
+
+                return (
+                    <div className="max-w-md mx-auto p-4 pt-12 animate-fadeIn">
+                        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border-t-4 border-gray-800">
+                            <div className="bg-gray-100 p-6 text-center">
+                                <h2 className="text-2xl font-bold text-gray-800">เข้าสู่ระบบ ป.ป.ช.สพฐ.น้อย</h2>
+                            </div>
+                            <form onSubmit={handleLogin} className="p-6 space-y-4">
+                                {error && <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">{error}</div>}
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">Username</label>
+                                    <input type="text" required value={username} onChange={e => setUsername(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-800 outline-none" />
+                                </div>
+                                <div>
+                                    <label className="block text-gray-700 font-semibold mb-2">Password</label>
+                                    <input type="password" required value={password} onChange={e => setPassword(e.target.value)}
+                                        className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-gray-800 outline-none" />
+                                </div>
+                                <div className="pt-4 flex gap-3">
+                                    <button type="button" onClick={() => setView('home')} className="w-1/3 px-4 py-3 rounded-lg border border-gray-300 text-gray-700 font-bold hover:bg-gray-50">กลับ</button>
+                                    <button type="submit" disabled={loading} className="w-2/3 bg-gray-800 text-white font-bold py-3 px-4 rounded-lg hover:bg-gray-900">
+                                        {loading ? 'กำลังโหลด...' : 'เข้าสู่ระบบ'}
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                );
+            };
+
+            const NaccDashboard = () => {
+                const [selectedClass, setSelectedClass] = React.useState('ทุกห้อง');
+                const [classList, setClassList] = React.useState(['ทุกห้อง']);
+                const [students, setStudents] = React.useState([]);
+                const [selectedStudent, setSelectedStudent] = React.useState(null);
+                
+                // สำหรับฟอร์มประเมิน
+                const [evalScore, setEvalScore] = React.useState('');
+                const [evalStatus, setEvalStatus] = React.useState('กำลังตรวจสอบ');
+
+                React.useEffect(() => {
+                    fetchData();
+                }, [selectedClass]);
+
+                const fetchData = async () => {
+                    const { data: allStudents } = await supabase.from('data_student').select('*');
+                    const { data: allRegis } = await supabase.from('regis').select('*');
+
+                    if (allStudents) {
+                        // ดึงรายชื่อห้องทั้งหมดมาสร้าง Dropdown
+                        const uniqueClasses = [...new Set(allStudents.map(s => s.Class))].sort();
+                        setClassList(['ทุกห้อง', ...uniqueClasses]);
+
+                        let filteredStudents = allStudents;
+                        if (selectedClass !== 'ทุกห้อง') {
+                            filteredStudents = allStudents.filter(s => s.Class === selectedClass);
+                        }
+
+                        // เรียงตามเลขที่
+                        filteredStudents.sort((a, b) => a["No."] - b["No."]);
+
+                        const enrichedList = filteredStudents.map(s => {
+                            const r = allRegis ? allRegis.find(r => r["Studen ID"] == s["Student ID"]) : null;
+                            return { ...s, regis: r };
+                        });
+                        setStudents(enrichedList);
+                    }
+                };
+
+                const openEvalModal = (st) => {
+                    setSelectedStudent(st);
+                    setEvalScore(st.regis.Score || '');
+                    setEvalStatus(st.regis.Verification || 'กำลังตรวจสอบ');
+                };
+
+                const handleSaveEval = async (e) => {
+                    e.preventDefault();
+                    
+                    try {
+                        const { error } = await supabase
+                            .from('regis')
+                            .update({ 
+                                Score: evalScore, 
+                                Verification: evalStatus,
+                                Inspector: currentUser.Name // บันทึกชื่อกรรมการ
+                            })
+                            .eq('Studen ID', selectedStudent["Student ID"]);
+
+                        if (error) throw error;
+
+                        alert("บันทึกการประเมินสำเร็จ");
+                        setSelectedStudent(null);
+                        fetchData(); // รีเฟรชข้อมูล
+                    } catch (err) {
+                        alert("เกิดข้อผิดพลาด: " + err.message);
+                    }
+                };
+
+                return (
+                    <div className="max-w-6xl mx-auto p-4 animate-fadeIn">
+                        <div className="flex justify-between items-center mb-6 border-b pb-4">
+                            <div>
+                                <h2 className="text-2xl font-bold text-brand-purple">ระบบตรวจสอบ ป.ป.ช.สพฐ.น้อย</h2>
+                                <p className="text-gray-500">ผู้ตรวจสอบ: {currentUser.Name}</p>
+                            </div>
+                            <button onClick={() => setView('home')} className="px-6 py-2 bg-gray-200 rounded-lg font-semibold hover:bg-gray-300 shadow-sm">ออกจากระบบ</button>
+                        </div>
+
+                        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6 flex items-center gap-4">
+                            <label className="font-semibold text-gray-700 whitespace-nowrap">เลือกระดับชั้น:</label>
+                            <select value={selectedClass} onChange={e => setSelectedClass(e.target.value)} className="px-4 py-2 border border-gray-300 rounded-lg outline-none focus:ring-2 focus:ring-brand-purple w-full md:w-64 bg-gray-50 font-medium">
+                                {classList.map(c => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {students.map((st, i) => (
+                                <div key={i} onClick={() => st.regis && openEvalModal(st)} className={`bg-white p-4 rounded-xl border-2 ${st.regis ? 'border-green-400 cursor-pointer hover:shadow-lg hover:scale-[1.02]' : 'border-red-200 opacity-60'} flex gap-4 relative overflow-hidden transition-all`}>
+                                    <img src={st.Photo} alt="img" className="w-14 h-14 rounded-full object-cover border border-gray-200 shrink-0" />
+                                    <div className="overflow-hidden">
+                                        <p className="font-bold text-gray-800 truncate" title={st.Name}>{st.Name}</p>
+                                        <p className="text-xs text-gray-500 mt-1">เลขที่ {st["No."]} | รหัส {st["Student ID"]}</p>
+                                        {st.regis && st.regis.Verification && (
+                                            <p className={`text-xs font-semibold mt-1 ${st.regis.Verification === 'ผ่าน' ? 'text-green-600' : st.regis.Verification === 'ไม่ผ่าน' ? 'text-red-500' : 'text-yellow-600'}`}>
+                                                สถานะ: {st.regis.Verification}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className={`absolute top-0 right-0 px-2 py-1 text-[10px] font-bold text-white rounded-bl-lg ${st.regis ? 'bg-green-500' : 'bg-red-500'}`}>
+                                        {st.regis ? 'ส่งแล้ว' : 'ยังไม่ส่ง'}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Modal Evaluation */}
+                        {selectedStudent && (
+                            <div className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50">
+                                <div className="bg-white rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl animate-fadeIn hide-scrollbar">
+                                    <div className="bg-gray-800 p-4 text-white flex justify-between items-center sticky top-0 z-10">
+                                        <h3 className="font-bold text-lg">ตรวจสอบข้อมูล: {selectedStudent.Name}</h3>
+                                        <button onClick={() => setSelectedStudent(null)} className="hover:text-red-400"><i data-lucide="x"></i></button>
+                                    </div>
+                                    <form onSubmit={handleSaveEval} className="p-6 space-y-6">
+                                        <div className="bg-gray-50 p-4 rounded-lg border inline-block">
+                                            <p><strong>เบอร์โทรติดต่อ:</strong> {selectedStudent.regis["Tel."]}</p>
+                                        </div>
+                                        
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div className="border rounded-xl p-4">
+                                                <p className="text-sm font-bold text-brand-purple mb-2">ภาพหน้าคะแนน</p>
+                                                <div className="bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden min-h-[200px]">
+                                                    {selectedStudent.regis.ScorePhoto ? 
+                                                        <img src={selectedStudent.regis.ScorePhoto} alt="Score" className="w-full h-auto object-contain" /> : 
+                                                        <span className="text-gray-400">ไม่มีรูปภาพ</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                            <div className="border rounded-xl p-4">
+                                                <p className="text-sm font-bold text-brand-gold mb-2">ภาพเกียรติบัตร</p>
+                                                <div className="bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden min-h-[200px]">
+                                                    {selectedStudent.regis.CertificatePhoto ? 
+                                                        <img src={selectedStudent.regis.CertificatePhoto} alt="Certificate" className="w-full h-auto object-contain" /> : 
+                                                        <span className="text-gray-400">ไม่มีรูปภาพ</span>
+                                                    }
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-blue-50 p-6 rounded-xl border border-blue-100">
+                                            <h4 className="font-bold text-blue-900 mb-4 border-b border-blue-200 pb-2">บันทึกผลการตรวจสอบ</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2 text-gray-700">คะแนนที่ได้ (%)</label>
+                                                    <input type="number" required value={evalScore} onChange={e => setEvalScore(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ระบุตัวเลขคะแนน" />
+                                                </div>
+                                                <div>
+                                                    <label className="block text-sm font-semibold mb-2 text-gray-700">ผลการตรวจสอบ</label>
+                                                    <select value={evalStatus} onChange={e => setEvalStatus(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 bg-white focus:ring-2 focus:ring-blue-500 outline-none font-semibold">
+                                                        <option value="กำลังตรวจสอบ">กำลังตรวจสอบ</option>
+                                                        <option value="ผ่าน" className="text-green-600">ผ่าน</option>
+                                                        <option value="ไม่ผ่าน" className="text-red-600">ไม่ผ่าน</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-4 pt-4">
+                                            <button type="button" onClick={() => setSelectedStudent(null)} className="w-1/3 bg-gray-200 text-gray-800 font-bold py-4 rounded-xl hover:bg-gray-300 transition-colors">ยกเลิก</button>
+                                            <button type="submit" className="w-2/3 bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-black transition-colors">บันทึกผลการตรวจสอบ</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                );
+            };
+
+            React.useEffect(() => {
+                lucide.createIcons();
+            });
+
+            return (
+                <div className="min-h-screen flex flex-col">
+                    <Header />
+                    <main className="flex-grow pt-8 pb-12">
+                        {view === 'home' && <HomeView />}
+                        {view === 'login-student' && <LoginStudent />}
+                        {view === 'login-teacher' && <LoginTeacher />}
+                        {view === 'login-nacc' && <LoginNacc />}
+                        
+                        {(view === 'form-student' || view === 'form-teacher') && <SubmissionForm />}
+                        {view === 'status-student' && <SubmissionStatus />}
+                        
+                        {view === 'nacc-dash' && <NaccDashboard />}
+                    </main>
+                    <Footer />
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
 </body>
 </html>
