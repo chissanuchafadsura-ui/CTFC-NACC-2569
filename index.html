@@ -1,4 +1,608 @@
-// Load Dashboard Data Safely
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบทะเบียนเกียรติบัตรการอบรมหลักสูตรต้านทุจริตศึกษา - โรงเรียนภูเขียว</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" id="favicon" href="https://score.phukhieo.ac.th/helper/img/pklogo.png" type="image/png">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Supabase JS & SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Google Fonts: Prompt -->
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config for Custom Colors -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        prompt: ['Prompt', 'sans-serif'],
+                    },
+                    colors: {
+                        purple: {
+                            main: '#5b21b6', // Modern Deep Purple
+                            dark: '#4c1d95',
+                            light: '#ede9fe',
+                        },
+                        gold: {
+                            main: '#d4af37',
+                            light: '#fef3c7',
+                        }
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.08)',
+                        'glow': '0 0 15px rgba(255, 255, 255, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Prompt', sans-serif;
+            background-color: #ffffff; /* พื้นหลังสีขาวสบายตา */
+            color: #334155;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Modern Fade-in Animation */
+        .fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Logo white soft glow */
+        .logo-container {
+            background-color: #ffffff;
+            width: 100%;
+        }
+        .logo-glow {
+            filter: drop-shadow(0px 0px 8px rgba(255, 255, 255, 0.5));
+            transition: all 0.3s ease;
+        }
+        .logo-glow:hover {
+            transform: scale(1.05);
+            filter: drop-shadow(0px 0px 12px rgba(212, 175, 55, 0.4)); /* ทองฟุ้งบางๆ ตอน hover */
+        }
+
+        /* Glass Input styling */
+        .modern-input {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.75rem;
+            background-color: #f8fafc;
+            transition: all 0.3s ease;
+        }
+        .modern-input:focus {
+            outline: none;
+            border-color: #5b21b6;
+            box-shadow: 0 0 0 4px rgba(91, 33, 182, 0.1);
+            background-color: #ffffff;
+        }
+        
+        .modern-readonly {
+            background-color: #f1f5f9;
+            color: #64748b;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between">
+
+    <!-- Header / Logo Section -->
+    <header class="logo-container border-b-[3px] border-gold-main shadow-sm bg-white">
+        <div class="max-w-7xl mx-auto py-6 px-4 flex flex-col items-center justify-center gap-4">
+            
+            <!-- Logos -->
+            <div class="flex items-center justify-center space-x-3 md:space-x-4 flex-wrap bg-white rounded-xl p-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Emblem_of_the_National_Anti-Corruption_Commission_Thailand.svg/960px-Emblem_of_the_National_Anti-Corruption_Commission_Thailand.svg.png" alt="ป.ป.ช." class="h-14 md:h-16 w-auto logo-glow">
+                <img src="https://www.kruchiangrai.net/wp-content/uploads/2024/02/%E0%B8%AA%E0%B8%9E%E0%B8%90.1-%E0%B8%82%E0%B8%AD%E0%B8%9A%E0%B8%82%E0%B8%B2%E0%B8%A7.webp" alt="สพฐ." class="h-14 md:h-16 w-auto logo-glow">
+                <img src="https://score.phukhieo.ac.th/helper/img/pklogo.png" alt="PK Logo" class="h-14 md:h-16 w-auto logo-glow">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSmp0eh7_RSBKmHvK2EDeUUJRYIxCXHjYZNr2MDSJr0KSTBWauKtC8aFUnd&s=10" alt="Logo 4" class="h-14 md:h-16 w-auto logo-glow">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRyqP5dd2_-JXf02g8wFMy11ShZ5rEFvWlN315F4fu-u15imn4c3bOwvo&s=10" alt="Logo 5" class="h-14 md:h-16 w-auto logo-glow">
+            </div>
+
+            <!-- Title Texts -->
+            <div class="text-center mt-2">
+                <h1 class="text-xl md:text-2xl font-bold text-purple-main tracking-wide">
+                    ระบบทะเบียนเกียรติบัตรการอบรมหลักสูตรต้านทุจริตศึกษา
+                </h1>
+                <p class="text-sm md:text-base font-medium text-gray-500 mt-1">
+                    โรงเรียนภูเขียว สำนักงานเขตพื้นที่การศึกษามัธยมศึกษาชัยภูมิ
+                </p>
+            </div>
+        </div>
+    </header>
+
+    <!-- Description Alert -->
+    <div class="max-w-6xl mx-auto w-full px-4 mt-8">
+        <div class="bg-gradient-to-r from-purple-light to-white border-l-4 border-purple-main p-5 rounded-2xl shadow-sm flex items-start gap-4">
+            <div class="mt-1">
+                <div class="bg-purple-main text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-bullhorn text-sm"></i>
+                </div>
+            </div>
+            <div>
+                <h3 class="text-purple-main font-bold mb-1">คำอธิบาย</h3>
+                <p class="text-sm md:text-base text-gray-600 leading-relaxed">
+                    ให้นักเรียนทุกท่านอัปโหลดหลักฐานการเข้าอบรม/ทดสอบ หลักสูตรต้านทุจริตศึกษา เพื่อใช้เป็นหลักฐานการอบรม/ทดสอบในครั้งนี้ 
+                    <strong class="text-purple-dark">เป็นการสอบปลายภาค ของภาคเรียนที่ 1 ปีการศึกษา 2569</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application Area -->
+    <main class="max-w-6xl mx-auto w-full px-4 py-8 flex-grow">
+        
+        <!-- Navigation / Role Selection -->
+        <div id="nav-menu" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
+            <!-- Student Btn -->
+            <button onclick="switchView('student-login')" class="group relative overflow-hidden bg-white border border-gray-100 p-6 rounded-3xl shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-center">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-main to-gold-main opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 mx-auto bg-purple-light rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-user-graduate text-3xl text-purple-main"></i>
+                </div>
+                <h3 class="font-bold text-lg text-gray-800">1. เข้าสู่ระบบนักเรียน</h3>
+                <p class="text-xs text-gray-400 mt-2">สำหรับนักเรียนส่งหลักฐาน</p>
+            </button>
+
+            <!-- Teacher Btn -->
+            <button onclick="switchView('teacher-login')" class="group relative overflow-hidden bg-white border border-gray-100 p-6 rounded-3xl shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-center">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-main to-gold-main opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 mx-auto bg-purple-light rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-chalkboard-user text-3xl text-purple-main"></i>
+                </div>
+                <h3 class="font-bold text-lg text-gray-800">2. เข้าสู่ระบบครู</h3>
+                <p class="text-xs text-gray-400 mt-2">สำหรับบุคลากรครู</p>
+            </button>
+
+            <!-- NACC Btn -->
+            <button onclick="switchView('nacc-login')" class="group relative overflow-hidden bg-white border border-gray-100 p-6 rounded-3xl shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-center">
+                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-gold-main to-purple-main opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                <div class="w-16 h-16 mx-auto bg-gold-light rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
+                    <i class="fa-solid fa-user-shield text-3xl text-gold-main"></i>
+                </div>
+                <h3 class="font-bold text-lg text-gray-800">3. เข้าสู่ระบบ ป.ป.ช.สพฐ.น้อย</h3>
+                <p class="text-xs text-gray-400 mt-2">สำหรับกรรมการตรวจสอบ</p>
+            </button>
+        </div>
+
+        <!-- Dynamic Content Containers -->
+        <div id="view-container" class="relative">
+            
+            <!-- Dashboard View -->
+            <div id="dashboard-view" class="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 md:p-8 fade-in">
+                <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                    <h2 class="text-xl md:text-2xl font-bold text-purple-main flex items-center gap-3">
+                        <i class="fa-solid fa-chart-pie text-gold-main"></i> Dashboard สรุปการส่งข้อมูล
+                    </h2>
+                    <button onclick="loadDashboard()" class="text-gray-400 hover:text-purple-main transition">
+                        <i class="fa-solid fa-rotate-right"></i> รีเฟรช
+                    </button>
+                </div>
+                <div id="dashboard-list" class="space-y-4">
+                    <p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูล Dashboard...</p>
+                </div>
+            </div>
+
+            <!-- Student Login View -->
+            <div id="student-login-view" class="hidden bg-white rounded-3xl shadow-soft border border-gray-100 p-8 max-w-md mx-auto fade-in">
+                <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                </button>
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-purple-light text-purple-main rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
+                        <i class="fa-solid fa-user-graduate"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">ระบบนักเรียน</h2>
+                    <p class="text-gray-500 text-sm mt-1">กรุณากรอกข้อมูลเพื่อเข้าสู่ระบบ</p>
+                </div>
+                
+                <form id="student-login-form" onsubmit="handleStudentLogin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">รหัสนักเรียน (5 หลัก)</label>
+                        <input type="text" id="std-login-id" maxlength="5" required class="modern-input text-center text-xl tracking-widest" placeholder="12345">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">เลขบัตรประจำตัวประชาชน</label>
+                        <input type="text" id="std-login-cid" maxlength="17" required oninput="formatCitizenID(this)" class="modern-input text-center text-lg" placeholder="x-xxxx-xxxxx-xx-x">
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark hover:from-purple-dark hover:to-purple-main text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
+                        เข้าสู่ระบบ
+                    </button>
+                </form>
+            </div>
+
+            <!-- Student Form View -->
+            <div id="student-form-view" class="hidden bg-white rounded-3xl shadow-soft border border-gray-100 p-6 md:p-8 fade-in">
+                <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i> ออกจากระบบ
+                </button>
+                
+                <!-- Status Box (if already submitted) -->
+                <div id="student-status-box" class="hidden mb-8 p-6 bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl shadow-sm">
+                    <div class="flex items-center gap-3 mb-4 border-b border-green-100 pb-4">
+                        <i class="fa-solid fa-circle-check text-2xl text-green-500"></i>
+                        <h3 class="text-green-700 font-bold text-lg">ท่านได้ส่งข้อมูลเข้าสู่ระบบเรียบร้อยแล้ว</h3>
+                    </div>
+                    <div id="student-verified-result" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                </div>
+
+                <form id="student-submit-form" onsubmit="handleStudentSubmit(event)" class="space-y-8">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b border-gray-100 pb-4">แบบฟอร์มส่งหลักฐาน</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                        <div class="text-center md:col-span-1">
+                            <div class="relative inline-block">
+                                <img id="std-img-preview" src="" alt="Photo" class="w-32 h-32 md:w-40 md:h-40 object-cover rounded-2xl shadow-md border-4 border-white">
+                                <div class="absolute -bottom-3 -right-3 bg-gold-main text-white w-10 h-10 rounded-full flex items-center justify-center shadow-lg border-2 border-white">
+                                    <i class="fa-solid fa-camera"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="md:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">รหัสนักเรียน</label>
+                                <input type="text" id="std-form-id" readonly class="modern-input modern-readonly">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">เลขบัตรประชาชน</label>
+                                <input type="text" id="std-form-cid" readonly class="modern-input modern-readonly">
+                            </div>
+                            <div>
+                                <label class="text-xs text-gray-500 block mb-1">ชื่อ - สกุล</label>
+                                <input type="text" id="std-form-name" readonly class="modern-input modern-readonly">
+                            </div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">ระดับชั้น</label>
+                                    <input type="text" id="std-form-class" readonly class="modern-input modern-readonly text-center">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-gray-500 block mb-1">เลขที่</label>
+                                    <input type="text" id="std-form-no" readonly class="modern-input modern-readonly text-center">
+                                </div>
+                            </div>
+                            <div class="md:col-span-2">
+                                <label class="text-sm font-semibold text-purple-main block mb-2">เบอร์โทรศัพท์ (10 หลัก)</label>
+                                <input type="tel" id="std-form-tel" maxlength="10" required placeholder="08XXXXXXXX" pattern="0[0-9]{9}" class="modern-input">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
+                        <!-- Score File -->
+                        <div class="bg-purple-50/50 p-5 rounded-2xl border border-purple-100 hover:border-purple-300 transition">
+                            <label class="block font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <span class="bg-purple-main text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">1</span> 
+                                ภาพหน้าคะแนน
+                            </label>
+                            <input type="file" id="std-score-file" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer mb-3">
+                            <div class="mt-3 p-3 bg-white rounded-xl border border-purple-100 shadow-sm text-center">
+                                <p class="text-xs text-purple-600 font-medium mb-2 text-left"><i class="fa-regular fa-image"></i> ตัวอย่างภาพหน้าคะแนนที่ถูกต้อง:</p>
+                                <img src="https://lh3.googleusercontent.com/d/185zo8ube_2cwCqIjoH8UG_rbjnHB9j3n=s800" alt="ตัวอย่างภาพหน้าคะแนน" class="w-full h-auto rounded-lg object-contain max-h-48 mx-auto border border-gray-100 shadow-sm">
+                            </div>
+                        </div>
+                        
+                        <!-- Certificate File -->
+                        <div class="bg-gold-light/30 p-5 rounded-2xl border border-gold-light hover:border-gold-main/50 transition">
+                            <label class="block font-bold text-gray-800 mb-3 flex items-center gap-2">
+                                <span class="bg-gold-main text-white w-6 h-6 rounded-full flex items-center justify-center text-xs">2</span> 
+                                ภาพเกียรติบัตร
+                            </label>
+                            <input type="file" id="std-cert-file" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-gold-100 file:text-gold-700 hover:file:bg-gold-200 cursor-pointer mb-3">
+                            <div class="mt-3 p-3 bg-white rounded-xl border border-gold-200 shadow-sm text-center">
+                                <p class="text-xs text-gold-700 font-medium mb-2 text-left"><i class="fa-regular fa-image"></i> ตัวอย่างภาพเกียรติบัตรที่ถูกต้อง:</p>
+                                <img src="https://lh3.googleusercontent.com/d/1S6WzJiepwWHjrgKP8WpTvrp-UWFq-FYw=s800" alt="ตัวอย่างภาพเกียรติบัตร" class="w-full h-auto rounded-lg object-contain max-h-48 mx-auto border border-gray-100 shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark hover:from-purple-dark hover:to-purple-main text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        <i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลส่งหลักฐาน
+                    </button>
+                </form>
+            </div>
+
+            <!-- Teacher Login View -->
+            <div id="teacher-login-view" class="hidden bg-white rounded-3xl shadow-soft border border-gray-100 p-8 max-w-md mx-auto fade-in">
+                <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                </button>
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-purple-light text-purple-main rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
+                        <i class="fa-solid fa-chalkboard-user"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">ระบบบุคลากรครู</h2>
+                </div>
+                
+                <form id="teacher-login-form" onsubmit="handleTeacherLogin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">E-mail (Username)</label>
+                        <input type="text" id="tch-login-email" required class="modern-input" placeholder="ไม่ต้องใส่ @phukhieo.ac.th ก็ได้">
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
+                        เข้าสู่ระบบ
+                    </button>
+                </form>
+            </div>
+
+            <!-- Teacher Form View -->
+            <div id="teacher-form-view" class="hidden bg-white rounded-3xl shadow-soft border border-gray-100 p-6 md:p-8 fade-in">
+                 <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i> ออกจากระบบ
+                </button>
+                <form id="teacher-submit-form" onsubmit="handleTeacherSubmit(event)" class="space-y-8">
+                    <h2 class="text-2xl font-bold text-gray-800 border-b border-gray-100 pb-4">ส่งหลักฐาน (ครู)</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        <div>
+                            <label class="text-xs text-gray-500 block mb-1">E-mail</label>
+                            <input type="text" id="tch-form-email" readonly class="modern-input modern-readonly">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 block mb-1">ชื่อ - สกุล</label>
+                            <input type="text" id="tch-form-name" readonly class="modern-input modern-readonly">
+                        </div>
+                        <div>
+                            <label class="text-xs text-gray-500 block mb-1">ระดับชั้น</label>
+                            <input type="text" id="tch-form-class" readonly class="modern-input modern-readonly">
+                        </div>
+                        <div>
+                            <label class="text-sm font-semibold text-purple-main block mb-1">เบอร์โทรศัพท์ (10 หลัก)</label>
+                            <input type="tel" id="tch-form-tel" maxlength="10" required placeholder="08XXXXXXXX" pattern="0[0-9]{9}" class="modern-input">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-100">
+                        <!-- Score -->
+                        <div class="bg-purple-50/50 p-5 rounded-2xl border border-purple-100">
+                            <label class="block font-bold text-gray-800 mb-3">1. ภาพหน้าคะแนน</label>
+                            <input type="file" id="tch-score-file" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-purple-100 file:text-purple-700 hover:file:bg-purple-200 cursor-pointer mb-3">
+                            <div class="mt-3 p-3 bg-white rounded-xl border border-purple-100 shadow-sm text-center">
+                                <p class="text-xs text-purple-600 font-medium mb-2 text-left"><i class="fa-regular fa-image"></i> ตัวอย่างภาพหน้าคะแนนที่ถูกต้อง:</p>
+                                <img src="https://lh3.googleusercontent.com/d/185zo8ube_2cwCqIjoH8UG_rbjnHB9j3n=s800" alt="ตัวอย่างภาพหน้าคะแนน" class="w-full h-auto rounded-lg object-contain max-h-48 mx-auto border border-gray-100 shadow-sm">
+                            </div>
+                        </div>
+                        <!-- Cert -->
+                        <div class="bg-gold-light/30 p-5 rounded-2xl border border-gold-light">
+                            <label class="block font-bold text-gray-800 mb-3">2. ภาพเกียรติบัตร</label>
+                            <input type="file" id="tch-cert-file" accept="image/*" required class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:bg-gold-100 file:text-gold-700 hover:file:bg-gold-200 cursor-pointer mb-3">
+                            <div class="mt-3 p-3 bg-white rounded-xl border border-gold-200 shadow-sm text-center">
+                                <p class="text-xs text-gold-700 font-medium mb-2 text-left"><i class="fa-regular fa-image"></i> ตัวอย่างภาพเกียรติบัตรที่ถูกต้อง:</p>
+                                <img src="https://lh3.googleusercontent.com/d/1S6WzJiepwWHjrgKP8WpTvrp-UWFq-FYw=s800" alt="ตัวอย่างภาพเกียรติบัตร" class="w-full h-auto rounded-lg object-contain max-h-48 mx-auto border border-gray-100 shadow-sm">
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
+                        บันทึกข้อมูลส่งหลักฐาน
+                    </button>
+                </form>
+            </div>
+
+            <!-- NACC Login View -->
+            <div id="nacc-login-view" class="hidden bg-white rounded-3xl shadow-soft border border-gray-100 p-8 max-w-md mx-auto fade-in">
+                <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
+                    <i class="fa-solid fa-arrow-left"></i> ย้อนกลับ
+                </button>
+                <div class="text-center mb-8">
+                    <div class="w-16 h-16 bg-gold-light text-gold-main rounded-full flex items-center justify-center mx-auto mb-4 text-2xl shadow-sm">
+                        <i class="fa-solid fa-user-shield"></i>
+                    </div>
+                    <h2 class="text-2xl font-bold text-gray-800">ระบบ ป.ป.ช.สพฐ.น้อย</h2>
+                </div>
+                
+                <form id="nacc-login-form" onsubmit="handleNaccLogin(event)" class="space-y-5">
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                        <input type="text" id="nacc-login-user" required class="modern-input">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">Password</label>
+                        <input type="password" id="nacc-login-pass" required class="modern-input">
+                    </div>
+                    <button type="submit" class="w-full bg-gradient-to-r from-gold-main to-yellow-600 text-white font-bold py-3 px-4 rounded-xl shadow-md hover:shadow-lg transition-all duration-300 transform hover:-translate-y-0.5">
+                        เข้าสู่ระบบผู้ตรวจสอบ
+                    </button>
+                </form>
+            </div>
+
+            <!-- NACC Admin View -->
+            <div id="nacc-admin-view" class="hidden bg-white rounded-3xl shadow-soft border border-gray-100 p-6 md:p-8 fade-in">
+                <div class="flex flex-col md:flex-row justify-between items-center border-b border-gray-100 pb-6 mb-6 gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-800">ระบบตรวจสอบหลักฐาน</h2>
+                        <p class="text-sm text-gray-500 mt-1">ผู้เข้าสู่ระบบ: <span id="nacc-inspector-name" class="font-bold text-purple-main bg-purple-50 px-2 py-1 rounded"></span></p>
+                    </div>
+                    <div class="w-full md:w-72 flex gap-2">
+                        <select id="nacc-class-select" onchange="loadNaccStudentCards()" class="modern-input font-medium cursor-pointer">
+                            <!-- Options -->
+                        </select>
+                        <button onclick="switchView('dashboard')" class="bg-gray-100 hover:bg-gray-200 text-gray-600 px-4 rounded-xl transition" title="ออกจากระบบ">
+                            <i class="fa-solid fa-power-off"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="nacc-students-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Cards render here -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- NACC Verify Modal -->
+    <div id="nacc-modal" class="hidden fixed inset-0 bg-gray-900/40 backdrop-blur-sm flex items-center justify-center p-4 z-50 fade-in">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-2xl w-full p-6 md:p-8 max-h-[90vh] overflow-y-auto border border-gray-100">
+            <div class="flex justify-between items-center border-b border-gray-100 pb-4 mb-5">
+                <h3 class="text-xl font-bold text-gray-800" id="modal-std-name">ตรวจหลักฐานนักเรียน</h3>
+                <button onclick="closeNaccModal()" class="text-gray-400 hover:text-red-500 transition w-8 h-8 flex justify-center items-center rounded-full hover:bg-red-50">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+            
+            <form id="nacc-verify-form" onsubmit="handleNaccVerifySubmit(event)" class="space-y-6">
+                <input type="hidden" id="modal-std-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 bg-gray-50 p-4 rounded-2xl">
+                    <div>
+                        <label class="text-xs text-gray-500 block mb-1">เบอร์โทรศัพท์ (ติดต่อ)</label>
+                        <input type="text" id="modal-std-tel" readonly class="modern-input modern-readonly bg-white">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-purple-main block mb-1">ให้คะแนน (%)</label>
+                        <input type="number" step="0.01" id="modal-std-score" required class="modern-input bg-white focus:ring-purple-main" placeholder="เช่น 80">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-2"><i class="fa-solid fa-image text-purple-main"></i> ภาพหน้าคะแนน</label>
+                        <div class="bg-gray-100 rounded-xl p-1 border">
+                            <img id="modal-score-img" src="" alt="Score" class="w-full h-48 object-cover rounded-lg hover:object-contain transition-all cursor-pointer">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="text-sm font-semibold text-gray-700 block mb-2"><i class="fa-solid fa-certificate text-gold-main"></i> ภาพเกียรติบัตร</label>
+                        <div class="bg-gray-100 rounded-xl p-1 border">
+                            <img id="modal-cert-img" src="" alt="Cert" class="w-full h-48 object-cover rounded-lg hover:object-contain transition-all cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-purple-50 p-5 rounded-2xl border border-purple-100">
+                    <label class="text-sm font-bold text-gray-800 block mb-2">อัปเดตสถานะการตรวจสอบ</label>
+                    <select id="modal-verification" class="modern-input cursor-pointer font-medium bg-white">
+                        <option value="กำลังตรวจสอบ">⏳ กำลังตรวจสอบ</option>
+                        <option value="ผ่าน">✅ ผ่าน</option>
+                        <option value="ไม่ผ่าน">❌ ไม่ผ่าน</option>
+                    </select>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-2">
+                    <button type="button" onclick="closeNaccModal()" class="px-6 py-3 rounded-xl text-gray-600 font-medium hover:bg-gray-100 transition">ยกเลิก</button>
+                    <button type="submit" class="px-6 py-3 bg-purple-main text-white font-bold rounded-xl shadow-lg hover:shadow-xl hover:bg-purple-dark transition">บันทึกผล</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w-full bg-white border-t border-gray-200 text-center py-6 px-4 mt-12 text-sm text-gray-500 shadow-[0_-5px_15px_rgba(0,0,0,0.02)]">
+        <p class="mb-1 font-medium">©CTFC NACC – OBEC - JUNIOR REGIS 2026 ALLRIGHT RESERVED</p>
+        <p>
+            Developed by 
+            <a href="https://www.instagram.com/big_chissanucha_pk?igsh=MWNvZGJydTk1cGJh" target="_blank" class="text-gold-main font-bold hover:text-yellow-600 transition">
+                Dev_Chissanucha Fadsura
+            </a>
+        </p>
+    </footer>
+
+    <!-- App Script -->
+    <script>
+        // Supabase Init
+        const SUPABASE_URL = "https://wmcplpmmubrofsgqialj.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_zyXW-H-i2vTOewlb66haNw_oT5c83qX";
+        
+        // FIX: เปลี่ยนชื่อตัวแปรเป็น db แทน supabase เพื่อไม่ให้ชนกับชื่อไลบรารีหลักที่โหลดมาจาก CDN
+        const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentStudentData = null;
+        let currentTeacherData = null;
+        let currentNaccUser = null;
+
+        // --- Helpers สำหรับป้องกันปัญหาชื่อคอลัมน์ไม่ตรงเป๊ะ (ดึงได้ทั้ง Name. และ Name) ---
+        const getStdId = (obj) => obj['Student ID/E-mail'] || obj['Student ID'] || obj['student_id'] || obj['Studen ID'] || obj['รหัสนักเรียน'] || '';
+        const getStdName = (obj) => obj['Name.'] || obj['Name'] || obj['name'] || obj['ชื่อ-สกุล'] || 'ไม่ระบุชื่อ';
+        const getStdNo = (obj) => obj['No.'] || obj['No'] || obj['no'] || obj['เลขที่'] || '-';
+        const getStdClass = (obj) => obj['Class'] || obj['class'] || obj['ระดับชั้น'] || '-';
+        const getStdPhoto = (obj) => obj['Photo'] || obj['photo'] || obj['รูปภาพ'] || 'https://cdn-icons-png.flaticon.com/512/3135/3135715.png';
+
+        const getTchEmail = (obj) => obj['E – mail'] || obj['E-mail'] || obj['Email'] || obj['email'] || '';
+        const getTchName = (obj) => obj['Name.'] || obj['Name'] || obj['name'] || obj['ชื่อ-สกุล'] || 'ไม่ระบุชื่อ';
+        const getTchClass = (obj) => obj['Class'] || obj['class'] || obj['ระดับชั้น'] || '-';
+
+        // --- Helper สำหรับดึงข้อมูลทั้งหมด (แก้ปัญหา Supabase จำกัดการดึงแค่ 1000 แถว) ---
+        async function fetchAllRecords(tableName) {
+            let allData = [];
+            let from = 0;
+            const limit = 1000;
+            let hasMore = true;
+            
+            while (hasMore) {
+                const { data, error } = await db.from(tableName).select('*').range(from, from + limit - 1);
+                if (error) throw error;
+                if (data && data.length > 0) {
+                    allData.push(...data);
+                    from += limit;
+                    if (data.length < limit) hasMore = false;
+                } else {
+                    hasMore = false;
+                }
+            }
+            return allData;
+        }
+
+        // On Load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboard();
+        });
+
+        // Safe View Switcher
+        function switchView(viewName) {
+            try {
+                // Hide all
+                const views = ['dashboard-view', 'student-login-view', 'student-form-view', 'teacher-login-view', 'teacher-form-view', 'nacc-login-view', 'nacc-admin-view'];
+                views.forEach(v => {
+                    const el = document.getElementById(v);
+                    if(el) el.classList.add('hidden');
+                });
+                
+                // Show requested
+                const target = document.getElementById(viewName + '-view');
+                if (target) {
+                    target.classList.remove('hidden');
+                    if (viewName === 'dashboard') loadDashboard();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            } catch (e) {
+                console.error("View Switch Error: ", e);
+            }
+        }
+
+        // Format Citizen ID
+        function formatCitizenID(input) {
+            let val = input.value.replace(/\D/g, '');
+            if (val.length > 13) val = val.substring(0, 13);
+            let formatted = '';
+            if (val.length > 0) formatted += val.substring(0, 1);
+            if (val.length > 1) formatted += '-' + val.substring(1, 5);
+            if (val.length > 5) formatted += '-' + val.substring(5, 10);
+            if (val.length > 10) formatted += '-' + val.substring(10, 12);
+            if (val.length > 12) formatted += '-' + val.substring(12, 13);
+            input.value = formatted;
+        }
+
+        // Load Dashboard Data Safely
         async function loadDashboard() {
             const list = document.getElementById('dashboard-list');
             list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูล...</p>';
@@ -9,73 +613,56 @@
                 const teachers = await fetchAllRecords('data_teacher');
 
                 if (!students || students.length === 0) {
-                    list.innerHTML = '<p class="text-center py-8 text-gray-500">ไม่พบข้อมูลนักเรียน</p>';
+                    list.innerHTML = `
+                        <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            <i class="fa-solid fa-folder-open text-gray-300 text-4xl mb-2"></i>
+                            <p class="text-gray-500">ยังไม่มีข้อมูลนักเรียนในฐานข้อมูล</p>
+                            <p class="text-xs text-gray-400 mt-1">กรุณาเพิ่มข้อมูลในตาราง data_student</p>
+                        </div>`;
                     return;
                 }
 
-                // Group students by class
                 const classMap = {};
-                students.forEach(s => {
-                    const c = getStdClass(s);
-                    if (!classMap[c]) classMap[c] = [];
-                    classMap[c].push(s);
-                });
-
-                // Group teachers by class
-                const teachersByClass = {};
-                (teachers || []).forEach(t => {
-                    const c = getTchClass(t);
-                    if (!teachersByClass[c]) teachersByClass[c] = [];
-                    teachersByClass[c].push(t);
+                students.forEach(std => {
+                    const cls = getStdClass(std);
+                    if (!classMap[cls]) classMap[cls] = [];
+                    classMap[cls].push(std);
                 });
 
                 const sortedClasses = Object.keys(classMap).sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
                 list.innerHTML = '';
                 
-                const regisIds = new Set((regis || []).map(r => getStdId(r)));
-                const regisEmails = new Set((regis || []).map(r => r['Student ID/E-mail']));
-
+                const teacherObjMap = {};
+                (teachers || []).forEach(t => {
+                    teacherObjMap[getTchClass(t)] = t;
+                });
+                
                 sortedClasses.forEach(cls => {
                     const classStds = classMap[cls];
+                    const regisIds = new Set((regis || []).map(r => getStdId(r)));
+                    const regisEmails = new Set((regis || []).map(r => r['Student ID/E-mail']));
                     let subCount = 0;
                     
                     classStds.forEach(s => { if (regisIds.has(getStdId(s))) subCount++; });
                     const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
 
-                    // ครูประจำชั้น/ที่ปรึกษาทุกคนในห้องนี้
-                    const classTchs = teachersByClass[cls] || [];
-                    let tchRowsHTML = '';
-                    if (classTchs.length > 0) {
-                        tchRowsHTML = `
-                            <div class="mb-4 bg-purple-50 p-3.5 rounded-xl border border-purple-100 space-y-2">
-                                <div class="text-xs font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-chalkboard-user text-purple-600"></i>
-                                    ครูที่ปรึกษา (${classTchs.length} ท่าน)
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    ${classTchs.map(tObj => {
-                                        const tName = getTchName(tObj);
-                                        const tEmail = getTchEmail(tObj);
-                                        const isTchSub = tEmail ? regisEmails.has(tEmail) : false;
-                                        return `
-                                            <div class="flex justify-between items-center py-2 px-3 bg-white rounded-lg text-sm border border-purple-100 shadow-sm">
-                                                <span class="text-gray-700 font-medium">${tName}</span>
-                                                <span class="${isTchSub ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50'} px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                                                    ${isTchSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                                                </span>
-                                            </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-                            </div>
-                        `;
-                    } else {
-                        tchRowsHTML = `
-                            <div class="mb-4 p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-500 flex items-center gap-2">
-                                <i class="fa-solid fa-circle-info"></i> ยังไม่ได้ระบุครูที่ปรึกษาประจำห้องนี้
-                            </div>
-                        `;
-                    }
+                    const tObj = teacherObjMap[cls];
+                    const tName = tObj ? getTchName(tObj) : 'ไม่ระบุ';
+                    const tEmail = tObj ? getTchEmail(tObj) : null;
+                    const isTchSub = tEmail ? regisEmails.has(tEmail) : false;
+
+                    const tchStatusSpan = tObj ? 
+                        `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${isTchSub ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${isTchSub ? '✅ ส่งแล้ว' : '❌ ยังไม่ส่ง'}</span>` 
+                        : '';
+
+                    const tchRowHTML = tObj ? `
+                        <div class="flex justify-between items-center py-3 px-4 bg-purple-50 rounded-lg text-sm mb-3 border border-purple-100 shadow-sm">
+                            <span class="text-purple-800 font-bold"><i class="fa-solid fa-chalkboard-user text-purple-500 mr-2"></i>ครูที่ปรึกษา <span class="text-purple-300 mx-1">|</span> ${tName}</span>
+                            <span class="${isTchSub ? 'text-green-600 bg-green-100' : 'text-red-500 bg-red-100'} px-3 py-1 rounded-full text-xs font-bold shadow-sm">
+                                ${isTchSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
+                            </span>
+                        </div>
+                    ` : '';
 
                     const detailHTML = classStds.map(s => {
                         const sId = getStdId(s);
@@ -97,13 +684,17 @@
                         <summary class="cursor-pointer p-5 font-bold text-purple-main bg-white flex justify-between items-center group-hover:bg-purple-50/50 transition flex-wrap gap-2">
                             <span class="flex items-center gap-2">
                                 <i class="fa-solid fa-users text-gold-main"></i> มัธยมศึกษาปีที่ ${cls}
+                                <span class="text-xs font-normal text-gray-600 bg-purple-50 px-2 py-1 rounded-md border border-purple-100 ml-2 shadow-sm flex items-center">
+                                    <i class="fa-solid fa-chalkboard-user text-purple-400 mr-1"></i>ครูที่ปรึกษา: ${tName}
+                                    ${tchStatusSpan}
+                                </span>
                             </span>
                             <span class="text-sm bg-purple-100 text-purple-800 py-1.5 px-4 rounded-full border border-purple-200">
                                 นร. ส่งแล้ว ${percent}% (${subCount}/${classStds.length})
                             </span>
                         </summary>
                         <div class="p-4 bg-white border-t border-gray-50">
-                            ${tchRowsHTML}
+                            ${tchRowHTML}
                             ${detailHTML}
                         </div>
                     `;
@@ -111,8 +702,206 @@
                 });
             } catch (err) {
                 console.error(err);
-                list.innerHTML = '<p class="text-center py-8 text-red-500">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
+                list.innerHTML = `
+                    <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-2"></i>
+                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</p>
+                        <p class="text-sm text-red-600 mt-1">${err.message}</p>
+                        <p class="text-xs text-red-500 mt-2">โปรดตรวจสอบ API Key ปิด RLS แล้ว และตารางมีอยู่จริง</p>
+                    </div>`;
             }
+        }
+
+        // Handle Student Login
+        async function handleStudentLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+            btn.disabled = true;
+
+            try {
+                const stdId = document.getElementById('std-login-id').value.trim();
+                const cidRaw = document.getElementById('std-login-cid').value.replace(/\D/g, '');
+
+                const { data: stdData, error } = await db.from('data_student').select('*').eq('Student ID/E-mail', stdId).single();
+
+                if (error) {
+                    console.error("Supabase Error:", error);
+                    if (error.code === 'PGRST116') {
+                        // แจ้งเตือนเมื่อไม่มีข้อมูลนี้อยู่จริงๆ
+                        Swal.fire({
+                            title: 'ไม่พบข้อมูล', 
+                            html: `ไม่มีรหัสนักเรียน <b>${stdId}</b> ในฐานข้อมูล<br><br><span class="text-xs text-gray-500">(โปรดเพิ่มข้อมูลในตาราง data_student)</span>`, 
+                            icon: 'error'
+                        });
+                    } else {
+                        // แจ้งเตือนเมื่อติดเรื่องความปลอดภัย RLS หรือเชื่อมต่อไม่ได้
+                        Swal.fire({
+                            title: 'ถูกปฏิเสธการเข้าถึง', 
+                            html: `${error.message}<br><br><span class="text-xs text-red-500">(อาจลืมปิด Row Level Security ในตาราง)</span>`, 
+                            icon: 'error'
+                        });
+                    }
+                    return;
+                }
+
+                currentStudentData = { ...stdData, cleanCID: cidRaw };
+                const sId = getStdId(stdData);
+                const { data: regisData } = await db.from('regis').select('*').eq('Studen ID', sId).single();
+
+                switchView('student-form');
+
+                // Populate form
+                document.getElementById('std-img-preview').src = getStdPhoto(stdData);
+                document.getElementById('std-form-id').value = sId;
+                document.getElementById('std-form-cid').value = document.getElementById('std-login-cid').value;
+                document.getElementById('std-form-name').value = getStdName(stdData);
+                document.getElementById('std-form-class').value = getStdClass(stdData);
+                document.getElementById('std-form-no').value = getStdNo(stdData);
+
+                if (regisData) {
+                    document.getElementById('student-status-box').classList.remove('hidden');
+                    document.getElementById('student-submit-form').classList.add('hidden');
+
+                    document.getElementById('student-verified-result').innerHTML = `
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <p class="text-xs text-gray-500 mb-1">คะแนนประเมิน</p>
+                            <p class="font-bold text-2xl text-purple-main">${regisData['Score'] !== null ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ'}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <p class="text-xs text-gray-500 mb-1">สถานะ</p>
+                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : 'text-amber-600'}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('student-status-box').classList.add('hidden');
+                    document.getElementById('student-submit-form').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire('ข้อผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // Submit Student Form
+        async function handleStudentSubmit(e) {
+            e.preventDefault();
+            const tel = document.getElementById('std-form-tel').value.trim();
+
+            Swal.fire({ title: 'กำลังบันทึกข้อมูล...', html: 'โปรดรอสักครู่', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const mockScoreUrl = `https://lh3.googleusercontent.com/d/_${Date.now()}_score.jpg`;
+            const mockCertUrl = `https://lh3.googleusercontent.com/d/_${Date.now()}_cert.jpg`;
+
+            const sId = getStdId(currentStudentData);
+            const payload = {
+                "Studen ID": sId,
+                "Student ID/E-mail": sId,
+                "ID": currentStudentData.cleanCID,
+                "No.": getStdNo(currentStudentData),
+                "Name": getStdName(currentStudentData),
+                "Class": getStdClass(currentStudentData),
+                "Tel.": tel,
+                "ScorePhoto": mockScoreUrl,
+                "CertificatePhoto": mockCertUrl,
+                "Verification": "กำลังตรวจสอบ"
+            };
+
+            const { error } = await db.from('regis').insert([payload]);
+
+            if (error) {
+                Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
+            } else {
+                Swal.fire({
+                    title: 'สำเร็จ!',
+                    text: 'บันทึกข้อมูลหลักฐานเรียบร้อยแล้ว',
+                    icon: 'success',
+                    confirmButtonColor: '#5b21b6'
+                }).then(() => switchView('dashboard'));
+            }
+        }
+
+        // Teacher Login
+        async function handleTeacherLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('tch-login-email').value.trim();
+            const { data, error } = await db.from('data_teacher').select('*').ilike('E – mail', `%${email}%`).single();
+
+            if (error || !data) {
+                Swal.fire('ไม่พบข้อมูล', 'ไม่พบชื่อผู้ใช้งานนี้ในระบบบุคลากรครู', 'error');
+                return;
+            }
+
+            currentTeacherData = data;
+            switchView('teacher-form');
+            document.getElementById('tch-form-email').value = getTchEmail(data);
+            document.getElementById('tch-form-name').value = getTchName(data);
+            document.getElementById('tch-form-class').value = getTchClass(data);
+        }
+
+        // Submit Teacher
+        async function handleTeacherSubmit(e) {
+            e.preventDefault();
+            const tel = document.getElementById('tch-form-tel').value.trim();
+            Swal.fire({ title: 'กำลังบันทึก...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+            const mockScoreUrl = `https://lh3.googleusercontent.com/d/_${Date.now()}_tch_score.jpg`;
+            const mockCertUrl = `https://lh3.googleusercontent.com/d/_${Date.now()}_tch_cert.jpg`;
+
+            const email = getTchEmail(currentTeacherData);
+            const payload = {
+                "Studen ID": email + '_tch', 
+                "Student ID/E-mail": email,
+                "Name": getTchName(currentTeacherData),
+                "Class": getTchClass(currentTeacherData),
+                "Tel.": tel,
+                "ScorePhoto": mockScoreUrl,
+                "CertificatePhoto": mockCertUrl,
+                "Verification": "กำลังตรวจสอบ"
+            };
+
+            const { error } = await db.from('regis').insert([payload]);
+
+            if (error) Swal.fire('เกิดข้อผิดพลาด', error.message, 'error');
+            else Swal.fire('สำเร็จ', 'บันทึกข้อมูลเรียบร้อยแล้ว', 'success').then(() => switchView('dashboard'));
+        }
+
+        // NACC Login
+        async function handleNaccLogin(e) {
+            e.preventDefault();
+            const user = document.getElementById('nacc-login-user').value.trim();
+            const pass = document.getElementById('nacc-login-pass').value.trim();
+
+            const { data, error } = await db.from('data_NACC').select('*').eq('Username', user).eq('Password', pass).single();
+
+            if (error || !data) {
+                Swal.fire('รหัสไม่ถูกต้อง', 'Username หรือ Password ผิดพลาด', 'error');
+                return;
+            }
+
+            currentNaccUser = data;
+            document.getElementById('nacc-inspector-name').innerText = data['Name'];
+            
+            // Generate Class dropdown
+            const select = document.getElementById('nacc-class-select');
+            select.innerHTML = '';
+            
+            const classes = [data['Class 1'], data['Class 2'], data['Class 3'], data['Class 4']].filter(Boolean);
+            if (classes.some(c => c.includes('ทุกห้อง'))) {
+                select.innerHTML += `<option value="all">ตรวจสอบทุกห้อง</option>`;
+                const allStds = await fetchAllRecords('data_student');
+                const uniq = [...new Set((allStds || []).map(s => getStdClass(s)))].filter(c => c !== '-').sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+                uniq.forEach(c => select.innerHTML += `<option value="${c}">ตรวจสอบ ม.${c}</option>`);
+            } else {
+                classes.forEach(c => select.innerHTML += `<option value="${c}">ตรวจสอบ ม.${c}</option>`);
+            }
+
+            switchView('nacc-admin');
+            loadNaccStudentCards();
         }
 
         // NACC Admin Load Students
@@ -131,6 +920,7 @@
                     stds = allStds;
                     regis = allRegis;
                 } else {
+                    // กรองข้อมูลในฝั่ง JavaScript ตัดปัญหาชื่อคอลัมน์ไม่ตรง
                     stds = allStds.filter(s => getStdClass(s) === cls);
                     regis = allRegis.filter(r => getStdClass(r) === cls);
                 }
@@ -138,14 +928,8 @@
                 const rMap = {};
                 (regis || []).forEach(r => rMap[getStdId(r)] = r);
 
-                const regisEmails = new Set((allRegis || []).map(r => r['Student ID/E-mail']));
-
-                const teachersByClass = {};
-                (allTchs || []).forEach(t => {
-                    const c = getTchClass(t);
-                    if (!teachersByClass[c]) teachersByClass[c] = [];
-                    teachersByClass[c].push(t);
-                });
+                const teacherObjMap = {};
+                (allTchs || []).forEach(t => { teacherObjMap[getTchClass(t)] = t; });
 
                 grid.innerHTML = '';
                 
@@ -164,50 +948,37 @@
 
                 const sortedClasses = Object.keys(classGroup).sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
 
+                // สร้างหัวข้อแต่ละห้อง และตามด้วยรายชื่อนักเรียน
                 sortedClasses.forEach(c => {
                     const classStds = classGroup[c];
                     let subCount = 0;
                     classStds.forEach(s => { if(rMap[getStdId(s)]) subCount++; });
-                    const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
+                    
+                    const tObj = teacherObjMap[c];
+                    const tName = tObj ? getTchName(tObj) : 'ไม่ระบุ';
+                    const tEmail = tObj ? getTchEmail(tObj) : null;
+                    const isTchSub = tEmail ? allRegis.some(r => r['Student ID/E-mail'] === tEmail) : false;
 
-                    const classTchs = teachersByClass[c] || [];
+                    const tchStatusSpan = tObj ? 
+                        `<span class="ml-2 px-2 py-0.5 rounded text-[10px] font-bold ${isTchSub ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-600'}">${isTchSub ? '✅ ส่งแล้ว' : '❌ ยังไม่ส่ง'}</span>` 
+                        : '';
+
+                    const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
 
                     grid.innerHTML += `
                         <div class="col-span-full mt-4 mb-2 bg-gradient-to-r from-purple-50 to-white text-purple-main font-bold p-4 rounded-xl border border-purple-100 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
-                            <div class="flex items-center gap-3">
+                            <div class="flex items-center flex-wrap gap-3">
                                 <span class="text-lg"><i class="fa-solid fa-users text-gold-main"></i> ม.${c}</span>
+                                <span class="text-sm bg-white text-gray-700 px-3 py-1 rounded-full border border-gray-200 shadow-sm flex items-center">
+                                    <i class="fa-solid fa-chalkboard-user text-purple-400 mr-1"></i> ครูที่ปรึกษา: ${tName}
+                                    ${tchStatusSpan}
+                                </span>
                             </div>
                             <span class="text-sm bg-purple-100 text-purple-800 py-1.5 px-4 rounded-full border border-purple-200 shadow-sm whitespace-nowrap">
                                 นร. ส่งแล้ว ${percent}% (${subCount}/${classStds.length} คน)
                             </span>
                         </div>
                     `;
-
-                    if (classTchs.length > 0) {
-                        grid.innerHTML += `
-                            <div class="col-span-full mb-3 bg-purple-50 p-3.5 rounded-xl border border-purple-100">
-                                <div class="text-xs font-bold text-purple-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                    <i class="fa-solid fa-chalkboard-user text-purple-600"></i>
-                                    ครูที่ปรึกษา (${classTchs.length} ท่าน)
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    ${classTchs.map(tObj => {
-                                        const tName = getTchName(tObj);
-                                        const tEmail = getTchEmail(tObj);
-                                        const isTchSub = tEmail ? regisEmails.has(tEmail) : false;
-                                        return `
-                                            <div class="flex justify-between items-center py-2 px-3 bg-white rounded-lg text-sm border border-purple-100 shadow-sm">
-                                                <span class="text-gray-700 font-medium">${tName}</span>
-                                                <span class="${isTchSub ? 'text-green-600 bg-green-50' : 'text-red-500 bg-red-50'} px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                                                    ${isTchSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                                                </span>
-                                            </div>
-                                        `;
-                                    }).join('')}
-                                </div>
-                            </div>
-                        `;
-                    }
 
                     classStds.forEach(s => {
                         const sId = getStdId(s);
@@ -237,444 +1008,46 @@
                 grid.innerHTML = '<p class="col-span-full text-center text-red-500 py-4">เกิดข้อผิดพลาดในการโหลดข้อมูล</p>';
             }
         }
-    </script>
-    <!-- FontAwesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Prompt Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Prompt', sans-serif;
-            background-color: #f8fafc;
-        }
-    </style>
-</head>
-<body class="min-h-screen text-slate-800 pb-12">
 
-    <!-- Header / Navbar -->
-    <header class="bg-gradient-to-r from-purple-900 via-purple-800 to-indigo-900 text-white shadow-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex items-center gap-3">
-                <div class="p-3 bg-white/10 rounded-2xl backdrop-blur-md border border-white/20">
-                    <i class="fa-solid fa-award text-amber-400 text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">ระบบติดตามการส่งข้อมูลเกียรติบัตร</h1>
-                    <p class="text-xs text-purple-200">ตรวจสอบสถานะการส่งข้อมูลนักเรียนและครูที่ปรึกษา</p>
-                </div>
-            </div>
-            <!-- Tab Navigation -->
-            <nav class="flex bg-purple-950/50 p-1.5 rounded-xl border border-white/10 text-sm font-medium">
-                <button id="tab-dashboard-btn" onclick="switchTab('dashboard')" class="px-4 py-2 rounded-lg transition-all duration-200 bg-white text-purple-900 shadow font-semibold">
-                    <i class="fa-solid fa-chart-pie mr-1.5"></i> Dashboard ครู
-                </button>
-                <button id="tab-board-btn" onclick="switchTab('board')" class="px-4 py-2 rounded-lg transition-all duration-200 text-purple-200 hover:text-white hover:bg-white/10">
-                    <i class="fa-solid fa-user-shield mr-1.5"></i> กรรมการ (ป.ป.ช.สพฐ.น้อย)
-                </button>
-            </nav>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
-
-        <!-- Overview Stat Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ห้องเรียนทั้งหมด</p>
-                    <h3 id="stat-classes" class="text-2xl font-bold text-slate-800 mt-1">0</h3>
-                </div>
-                <div class="w-12 h-12 bg-purple-100 text-purple-700 rounded-xl flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-school"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">นักเรียนส่งข้อมูลแล้ว</p>
-                    <h3 id="stat-students" class="text-2xl font-bold text-emerald-600 mt-1">0 / 0</h3>
-                </div>
-                <div class="w-12 h-12 bg-emerald-100 text-emerald-700 rounded-xl flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-user-check"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ครูส่งข้อมูลแล้ว</p>
-                    <h3 id="stat-teachers" class="text-2xl font-bold text-indigo-600 mt-1">0 / 0</h3>
-                </div>
-                <div class="w-12 h-12 bg-indigo-100 text-indigo-700 rounded-xl flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-chalkboard-user"></i>
-                </div>
-            </div>
-
-            <div class="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
-                <div>
-                    <p class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ภาพรวมความคืบหน้า</p>
-                    <h3 id="stat-percent" class="text-2xl font-bold text-amber-600 mt-1">0%</h3>
-                </div>
-                <div class="w-12 h-12 bg-amber-100 text-amber-700 rounded-xl flex items-center justify-center text-xl">
-                    <i class="fa-solid fa-chart-line"></i>
-                </div>
-            </div>
-        </div>
-
-        <!-- Search & Control Toolbar -->
-        <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm mb-6 flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="relative w-full md:w-96">
-                <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                <input type="text" id="search-input" oninput="handleSearch()" placeholder="ค้นหาชื่อนักเรียน, รหัส, ชื่อครู หรือห้องเรียน..." 
-                    class="w-full pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-purple-500/20 focus:border-purple-500 transition">
-            </div>
-            <div class="flex items-center gap-2 text-xs text-slate-500">
-                <span class="inline-block w-3 h-3 bg-emerald-500 rounded-full"></span> ส่งแล้ว
-                <span class="inline-block w-3 h-3 bg-red-500 rounded-full ml-2"></span> ยังไม่ส่ง
-            </div>
-        </div>
-
-        <!-- Tab 1: Dashboard ครู -->
-        <section id="view-dashboard" class="space-y-4">
-            <div id="dashboard-list" class="space-y-4">
-                <!-- Data rendered dynamically -->
-            </div>
-        </section>
-
-        <!-- Tab 2: กรรมการ (ป.ป.ช.สพฐ.น้อย) -->
-        <section id="view-board" class="hidden space-y-6">
-            <div class="bg-gradient-to-r from-amber-500 to-amber-600 text-white p-6 rounded-2xl shadow-sm">
-                <div class="flex items-center gap-3">
-                    <i class="fa-solid fa-user-shield text-3xl opacity-90"></i>
-                    <div>
-                        <h2 class="text-xl font-bold">มุมมองสำหรับกรรมการ (ป.ป.ช.สพฐ.น้อย)</h2>
-                        <p class="text-amber-100 text-sm">สรุปและตรวจสอบสถานะการส่งข้อมูลระดับห้องเรียน</p>
-                    </div>
-                </div>
-            </div>
-
-            <div id="board-grid" class="space-y-6">
-                <!-- Board grid rendered dynamically -->
-            </div>
-        </section>
-
-    </main>
-
-    <script>
-        // Mock Data Structure
-        const mockData = {
-            students: [
-                { id: "1001", no: "1", class: "1/1", name: "เด็กชายสมชาย ใจดี" },
-                { id: "1002", no: "2", class: "1/1", name: "เด็กชายสมศักดิ์ ขยันยิ่ง" },
-                { id: "1003", no: "3", class: "1/1", name: "เด็กหญิงสมหญิง รักเรียน" },
-                { id: "1004", no: "1", class: "1/2", name: "เด็กชายกิตติ พากเพียร" },
-                { id: "1005", no: "2", class: "1/2", name: "เด็กหญิงมานี มีตา" },
-                { id: "1006", no: "1", class: "2/1", name: "เด็กชายปิติ มีสุข" },
-                { id: "1007", no: "2", class: "2/1", name: "เด็กหญิงชูใจ ใฝ่เรียน" },
-                { id: "1008", no: "3", class: "2/1", name: "เด็กชายวีระ เก่งกล้า" }
-            ],
-            teachers: [
-                { name: "คุณครู วินัย เที่ยงธรรม", class: "1/1", email: "winai@school.ac.th" },
-                { name: "คุณครู สมศรี สุขใจ", class: "1/1", email: "somsri@school.ac.th" }, // ครูคนที่ 2 ของ 1/1
-                { name: "คุณครู ประสิทธิ์ มีอารี", class: "1/2", email: "prasit@school.ac.th" },
-                { name: "คุณครู นภา อากาศดี", class: "2/1", email: "napha@school.ac.th" }
-            ],
-            // ข้อมูลที่มีการลงทะเบียน/ส่งเข้ามาแล้ว
-            registrations: [
-                { "Student ID/E-mail": "1001", name: "เด็กชายสมชาย ใจดี" },
-                { "Student ID/E-mail": "1003", name: "เด็กหญิงสมหญิง รักเรียน" },
-                { "Student ID/E-mail": "winai@school.ac.th", name: "คุณครู วินัย เที่ยงธรรม" }, // ครู วินัย ส่งแล้ว
-                { "Student ID/E-mail": "1004", name: "เด็กชายกิตติ พากเพียร" },
-                { "Student ID/E-mail": "napha@school.ac.th", name: "คุณครู นภา อากาศดี" }, // ครู นภา ส่งแล้ว
-                { "Student ID/E-mail": "1006", name: "เด็กชายปิติ มีสุข" }
-            ]
-        };
-
-        // Helper getters
-        const getStdId = s => s.id;
-        const getStdNo = s => s.no;
-        const getStdName = s => s.name;
-        const getStdClass = s => s.class;
-        const getTchName = t => t.name;
-        const getTchClass = t => t.class;
-        const getTchEmail = t => t.email;
-
-        let activeTab = 'dashboard';
-        let searchQuery = '';
-
-        function switchTab(tab) {
-            activeTab = tab;
-            const dashBtn = document.getElementById('tab-dashboard-btn');
-            const boardBtn = document.getElementById('tab-board-btn');
-            const dashView = document.getElementById('view-dashboard');
-            const boardView = document.getElementById('view-board');
-
-            if (tab === 'dashboard') {
-                dashBtn.className = "px-4 py-2 rounded-lg transition-all duration-200 bg-white text-purple-900 shadow font-semibold";
-                boardBtn.className = "px-4 py-2 rounded-lg transition-all duration-200 text-purple-200 hover:text-white hover:bg-white/10";
-                dashView.classList.remove('hidden');
-                boardView.classList.add('hidden');
-            } else {
-                boardBtn.className = "px-4 py-2 rounded-lg transition-all duration-200 bg-white text-purple-900 shadow font-semibold";
-                dashBtn.className = "px-4 py-2 rounded-lg transition-all duration-200 text-purple-200 hover:text-white hover:bg-white/10";
-                boardView.classList.remove('hidden');
-                dashView.classList.add('hidden');
-            }
-        }
-
-        function handleSearch() {
-            searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
-            renderDashboard();
-            renderBoard();
-        }
-
-        function updateStats(students, teachers, regis) {
-            const regisIds = new Set(regis.map(r => r['Student ID/E-mail']));
-            
-            // Unique classes
-            const classes = new Set(students.map(getStdClass));
-            document.getElementById('stat-classes').innerText = `${classes.size} ห้อง`;
-
-            // Students submitted
-            const subStds = students.filter(s => regisIds.has(getStdId(s))).length;
-            document.getElementById('stat-students').innerText = `${subStds} / ${students.length}`;
-
-            // Teachers submitted
-            const subTchs = teachers.filter(t => regisIds.has(getTchEmail(t))).length;
-            document.getElementById('stat-teachers').innerText = `${subTchs} / ${teachers.length}`;
-
-            // Overall percent
-            const total = students.length;
-            const pct = total > 0 ? Math.round((subStds / total) * 100) : 0;
-            document.getElementById('stat-percent').innerText = `${pct}%`;
-        }
-
-        function renderDashboard() {
-            const list = document.getElementById('dashboard-list');
-            const { students, teachers, registrations } = mockData;
-
-            // Group students by class
-            const classMap = {};
-            students.forEach(s => {
-                const c = getStdClass(s);
-                if (!classMap[c]) classMap[c] = [];
-                classMap[c].push(s);
-            });
-
-            // Filter students based on search query
-            const filteredClasses = Object.keys(classMap).filter(cls => {
-                if (!searchQuery) return true;
-                const matchClass = cls.toLowerCase().includes(searchQuery);
-                const classStds = classMap[cls];
-                const matchStd = classStds.some(s => getStdName(s).toLowerCase().includes(searchQuery) || getStdId(s).includes(searchQuery));
-                const classTchs = teachers.filter(t => getTchClass(t) === cls);
-                const matchTch = classTchs.some(t => getTchName(t).toLowerCase().includes(searchQuery));
-                return matchClass || matchStd || matchTch;
-            });
-
-            const sortedClasses = filteredClasses.sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            list.innerHTML = '';
-
-            if (sortedClasses.length === 0) {
-                list.innerHTML = `
-                    <div class="text-center py-12 bg-white rounded-2xl border border-slate-200 text-slate-400">
-                        <i class="fa-solid fa-inbox text-4xl mb-2"></i>
-                        <p>ไม่พบข้อมูลตามคำค้นหา</p>
-                    </div>`;
+        // NACC Modal Handlers
+        function openNaccModal(std, regData) {
+            if (!regData) {
+                Swal.fire('แจ้งเตือน', 'นักเรียนคนนี้ยังไม่ได้ส่งหลักฐานเข้าระบบ', 'info');
                 return;
             }
-
-            const regisIds = new Set(registrations.map(r => r['Student ID/E-mail']));
-
-            sortedClasses.forEach(cls => {
-                const classStds = classMap[cls];
-                let subCount = 0;
-                classStds.forEach(s => { if (regisIds.has(getStdId(s))) subCount++; });
-                const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
-
-                // ดึงรายชื่อครูประจำชั้นทุกคนของห้องนี้
-                const classTeachers = teachers.filter(t => getTchClass(t) === cls);
-
-                // สร้าง HTML แสดงครูประจำชั้นทุกคน (วางไว้อยู่บนสุดของรายชื่อนักเรียน)
-                let tchRowsHTML = '';
-                if (classTeachers.length > 0) {
-                    tchRowsHTML = `
-                        <div class="mb-4 bg-purple-50/70 p-3.5 rounded-xl border border-purple-100 space-y-2">
-                            <div class="text-xs font-bold text-purple-900 uppercase tracking-wider mb-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-chalkboard-user text-purple-600"></i>
-                                ครูที่ปรึกษา (${classTeachers.length} ท่าน)
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    ` + classTeachers.map(tObj => {
-                        const tName = getTchName(tObj);
-                        const tEmail = getTchEmail(tObj);
-                        const isTchSub = tEmail ? regisIds.has(tEmail) : false;
-                        return `
-                            <div class="flex justify-between items-center py-2 px-3 bg-white rounded-lg text-sm border border-purple-100/80 shadow-xs">
-                                <span class="text-slate-700 font-medium">${tName}</span>
-                                <span class="${isTchSub ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-red-600 bg-red-50 border-red-200'} px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                                    ${isTchSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                                </span>
-                            </div>
-                        `;
-                    }).join('') + `
-                            </div>
-                        </div>
-                    `;
-                } else {
-                    tchRowsHTML = `
-                        <div class="mb-4 p-3 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-500 flex items-center gap-2">
-                            <i class="fa-solid fa-circle-info"></i> ยังไม่ได้ระบุครูที่ปรึกษาประจำห้องนี้
-                        </div>
-                    `;
-                }
-
-                // รายชื่อนักเรียน
-                const detailHTML = classStds.map(s => {
-                    const sId = getStdId(s);
-                    const isSub = regisIds.has(sId);
-                    return `
-                        <div class="flex justify-between items-center py-2 px-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-xl text-sm border border-slate-100 transition">
-                            <span class="text-slate-700 font-medium">
-                                <span class="text-slate-400 text-xs w-8 inline-block">เลขที่ ${getStdNo(s)}</span>
-                                <span class="text-slate-300 mx-1">|</span> 
-                                <span class="text-slate-500 text-xs mr-2">รหัส ${sId}</span>
-                                <span class="text-slate-300 mx-1">|</span> 
-                                ${getStdName(s)}
-                            </span>
-                            <span class="${isSub ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-red-600 bg-red-50 border-red-200'} px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                                ${isSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                            </span>
-                        </div>
-                    `;
-                }).join('');
-
-                const accordion = document.createElement('details');
-                accordion.className = 'border border-slate-200 rounded-2xl bg-white overflow-hidden shadow-xs hover:shadow-md transition group';
-                accordion.open = !!searchQuery; // เปิดค้างไว้ถ้ากำลังค้นหา
-
-                accordion.innerHTML = `
-                    <summary class="cursor-pointer p-4 font-bold text-slate-800 bg-white flex justify-between items-center group-hover:bg-purple-50/30 transition flex-wrap gap-2 select-none">
-                        <span class="flex items-center gap-2 text-base">
-                            <i class="fa-solid fa-users text-purple-600"></i> 
-                            มัธยมศึกษาปีที่ ${cls}
-                        </span>
-                        <span class="text-xs bg-purple-100 text-purple-800 font-bold py-1 px-3 rounded-full border border-purple-200">
-                            นร. ส่งแล้ว ${percent}% (${subCount}/${classStds.length} คน)
-                        </span>
-                    </summary>
-                    <div class="p-4 bg-white border-t border-slate-100">
-                        ${tchRowsHTML}
-                        <div class="space-y-1.5">
-                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">
-                                รายชื่อนักเรียน (${classStds.length} คน)
-                            </div>
-                            ${detailHTML}
-                        </div>
-                    </div>
-                `;
-                list.appendChild(accordion);
-            });
+            document.getElementById('modal-std-name').innerText = `ตรวจสอบ: ${getStdName(std)}`;
+            document.getElementById('modal-std-id').value = getStdId(std);
+            document.getElementById('modal-std-tel').value = regData['Tel.'] || '-';
+            document.getElementById('modal-std-score').value = regData['Score'] || '';
+            document.getElementById('modal-score-img').src = regData['ScorePhoto'] || '';
+            document.getElementById('modal-cert-img').src = regData['CertificatePhoto'] || '';
+            document.getElementById('modal-verification').value = regData['Verification'] || 'กำลังตรวจสอบ';
+            document.getElementById('nacc-modal').classList.remove('hidden');
         }
 
-        function renderBoard() {
-            const grid = document.getElementById('board-grid');
-            const { students, teachers, registrations } = mockData;
-
-            const classGroup = {};
-            students.forEach(s => {
-                const c = getStdClass(s);
-                if (!classGroup[c]) classGroup[c] = [];
-                classGroup[c].push(s);
-            });
-
-            const sortedClasses = Object.keys(classGroup).sort((a, b) => a.localeCompare(b, undefined, { numeric: true, sensitivity: 'base' }));
-            grid.innerHTML = '';
-
-            const regisIds = new Set(registrations.map(r => r['Student ID/E-mail']));
-
-            sortedClasses.forEach(c => {
-                const classStds = classGroup[c];
-                let subCount = 0;
-                classStds.forEach(s => { if (regisIds.has(getStdId(s))) subCount++; });
-                const percent = classStds.length > 0 ? Math.round((subCount / classStds.length) * 100) : 0;
-
-                // ดึงรายชื่อครูทุกคนของห้องนี้
-                const classTeachers = teachers.filter(t => getTchClass(t) === c);
-
-                let tchRowsHTML = '';
-                if (classTeachers.length > 0) {
-                    tchRowsHTML = `
-                        <div class="mb-4 bg-amber-50/60 p-3.5 rounded-xl border border-amber-100">
-                            <div class="text-xs font-bold text-amber-900 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <i class="fa-solid fa-chalkboard-user text-amber-600"></i>
-                                ครูที่ปรึกษาประจำห้อง (${classTeachers.length} ท่าน)
-                            </div>
-                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    ` + classTeachers.map(tObj => {
-                        const tName = getTchName(tObj);
-                        const tEmail = getTchEmail(tObj);
-                        const isTchSub = tEmail ? regisIds.has(tEmail) : false;
-                        return `
-                            <div class="flex justify-between items-center py-2 px-3 bg-white rounded-lg text-sm border border-amber-100 shadow-xs">
-                                <span class="text-slate-700 font-medium">${tName}</span>
-                                <span class="${isTchSub ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-red-600 bg-red-50 border-red-200'} px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                                    ${isTchSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                                </span>
-                            </div>
-                        `;
-                    }).join('') + `
-                            </div>
-                        </div>
-                    `;
-                }
-
-                const stdListHTML = classStds.map(s => {
-                    const sId = getStdId(s);
-                    const isSub = regisIds.has(sId);
-                    return `
-                        <div class="flex justify-between items-center py-2 px-3.5 bg-slate-50 hover:bg-slate-100/80 rounded-xl text-sm border border-slate-100 transition">
-                            <span class="text-slate-700 font-medium">
-                                <span class="text-slate-400 text-xs w-8 inline-block">เลขที่ ${getStdNo(s)}</span>
-                                <span class="text-slate-300 mx-1">|</span> 
-                                <span class="text-slate-500 text-xs mr-2">รหัส ${sId}</span>
-                                <span class="text-slate-300 mx-1">|</span> 
-                                ${getStdName(s)}
-                            </span>
-                            <span class="${isSub ? 'text-emerald-700 bg-emerald-50 border-emerald-200' : 'text-red-600 bg-red-50 border-red-200'} px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                                ${isSub ? '✅ ส่งข้อมูลแล้ว' : '❌ ยังไม่ส่ง'}
-                            </span>
-                        </div>
-                    `;
-                }).join('');
-
-                grid.innerHTML += `
-                    <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 mb-4 border-b border-slate-100">
-                            <div class="text-lg font-bold text-slate-800 flex items-center gap-2">
-                                <i class="fa-solid fa-users text-amber-500"></i> มัธยมศึกษาปีที่ ${c}
-                            </div>
-                            <span class="text-xs bg-amber-100 text-amber-800 font-bold py-1.5 px-3 rounded-full border border-amber-200 self-start sm:self-auto">
-                                ภาพรวมส่งข้อมูลแล้ว ${percent}% (${subCount}/${classStds.length} คน)
-                            </span>
-                        </div>
-                        ${tchRowsHTML}
-                        <div class="space-y-1.5">
-                            <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 px-1">
-                                รายชื่อนักเรียน
-                            </div>
-                            ${stdListHTML}
-                        </div>
-                    </div>
-                `;
-            });
+        function closeNaccModal() {
+            document.getElementById('nacc-modal').classList.add('hidden');
         }
 
-        // Initialize on page load
-        window.onload = function() {
-            updateStats(mockData.students, mockData.teachers, mockData.registrations);
-            renderDashboard();
-            renderBoard();
-        };
+        async function handleNaccVerifySubmit(e) {
+            e.preventDefault();
+            const sid = document.getElementById('modal-std-id').value;
+            const score = document.getElementById('modal-std-score').value;
+            const stat = document.getElementById('modal-verification').value;
+
+            Swal.fire({ title: 'บันทึกข้อมูล...', allowOutsideClick: false, didOpen:()=>Swal.showLoading() });
+
+            const { error } = await db.from('regis').update({
+                "Score": score, "Verification": stat, "Inspector": currentNaccUser['Name']
+            }).eq('Studen ID', sid);
+
+            if(error) Swal.fire('ผิดพลาด', error.message, 'error');
+            else {
+                Swal.fire({title:'สำเร็จ', text:'บันทึกผลการตรวจสอบเรียบร้อย', icon:'success', timer:1500, showConfirmButton:false});
+                closeNaccModal();
+                loadNaccStudentCards();
+            }
+        }
     </script>
 </body>
 </html>
