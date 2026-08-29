@@ -240,9 +240,9 @@
                 <div id="student-status-box" class="hidden mb-8 p-6 bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl shadow-sm">
                     <div class="flex items-center gap-3 mb-4 border-b border-green-100 pb-4">
                         <i class="fa-solid fa-circle-check text-2xl text-green-500"></i>
-                        <h3 class="text-green-700 font-bold text-lg">ท่านได้ส่งข้อมูลเข้าสู่ระบบเรียบร้อยแล้ว</h3>
+                        <h3 class="text-green-700 font-bold text-lg">ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น</h3>
                     </div>
-                    <div id="student-verified-result" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                    <div id="student-verified-result" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
                 </div>
 
                 <form id="student-submit-form" onsubmit="handleStudentSubmit(event)" class="space-y-8">
@@ -316,6 +316,11 @@
                         </div>
                     </div>
 
+                    <div class="pt-6 border-t border-gray-100">
+                        <label class="text-sm font-semibold text-gray-700 block mb-2">ปัญหาในการใช้ระบบอบรมหลักสูตรต้านทุจริตศึกษาออนไลน์ (ถ้ามี)</label>
+                        <textarea id="std-form-problem" rows="3" class="modern-input w-full resize-none" placeholder="ระบุปัญหาที่พบ หรือเว้นว่างไว้หากไม่มี"></textarea>
+                    </div>
+
                     <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark hover:from-purple-dark hover:to-purple-main text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                         <i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลส่งหลักฐาน
                     </button>
@@ -350,6 +355,16 @@
                  <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
                     <i class="fa-solid fa-arrow-left"></i> ออกจากระบบ
                 </button>
+
+                <!-- Status Box (if already submitted) -->
+                <div id="teacher-status-box" class="hidden mb-8 p-6 bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl shadow-sm">
+                    <div class="flex items-center gap-3 mb-4 border-b border-green-100 pb-4">
+                        <i class="fa-solid fa-circle-check text-2xl text-green-500"></i>
+                        <h3 class="text-green-700 font-bold text-lg">ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น</h3>
+                    </div>
+                    <div id="teacher-verified-result" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                </div>
+
                 <form id="teacher-submit-form" onsubmit="handleTeacherSubmit(event)" class="space-y-8">
                     <h2 class="text-2xl font-bold text-gray-800 border-b border-gray-100 pb-4">ส่งหลักฐาน (ครู)</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -390,6 +405,11 @@
                                 <img src="https://lh3.googleusercontent.com/d/1S6WzJiepwWHjrgKP8WpTvrp-UWFq-FYw=s800" alt="ตัวอย่างภาพเกียรติบัตร" class="w-full h-auto rounded-lg object-contain max-h-48 mx-auto border border-gray-100 shadow-sm">
                             </div>
                         </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-gray-100">
+                        <label class="text-sm font-semibold text-gray-700 block mb-2">ปัญหาในการใช้ระบบอบรมหลักสูตรต้านทุจริตศึกษาออนไลน์ (ถ้ามี)</label>
+                        <textarea id="tch-form-problem" rows="3" class="modern-input w-full resize-none" placeholder="ระบุปัญหาที่พบ หรือเว้นว่างไว้หากไม่มี"></textarea>
                     </div>
 
                     <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -921,17 +941,38 @@
                 document.getElementById('std-form-no').value = getStdNo(stdData);
 
                 if (regisData) {
+                    // แสดงหน้าต่างแจ้งเตือน
+                    Swal.fire({
+                        title: 'ข้อมูลถูกส่งแล้ว',
+                        text: 'ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น',
+                        icon: 'info',
+                        confirmButtonColor: '#5b21b6'
+                    });
+
                     document.getElementById('student-status-box').classList.remove('hidden');
                     document.getElementById('student-submit-form').classList.add('hidden');
 
+                    const scoreDisplay = regisData['Score'] !== null && regisData['Score'] !== undefined && regisData['Score'] !== '' ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ';
+                    const inspectorName = (regisData['Inspector'] && regisData['Inspector'] !== '-') ? regisData['Inspector'] : 'รอการประเมิน';
+                    const certImg = regisData['CertificatePhoto'] ? `<img src="${regisData['CertificatePhoto']}" class="w-full h-28 object-contain rounded-lg border border-gray-200 mt-2 cursor-pointer hover:opacity-80 transition" onclick="window.open('${regisData['CertificatePhoto']}', '_blank')" title="คลิกเพื่อดูรูปใหญ่">` : '<p class="text-sm text-gray-400 mt-2">ไม่พบภาพเกียรติบัตร</p>';
+
                     document.getElementById('student-verified-result').innerHTML = `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                            <p class="text-xs text-gray-500 mb-1">คะแนนประเมิน</p>
-                            <p class="font-bold text-2xl text-purple-main">${regisData['Score'] !== null && regisData['Score'] !== undefined ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ'}</p>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 ${regisData['Verification'] === 'ผ่าน' ? 'bg-green-500' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'bg-red-500' : 'bg-amber-400')}"></div>
+                            <p class="text-xs text-gray-500 mb-1 mt-2">สถานะการตรวจสอบ</p>
+                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'text-red-600' : 'text-amber-600')}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
+                            <div class="mt-2 pt-2 border-t border-gray-100 w-full text-center">
+                                <p class="text-[10px] text-gray-400">ผู้ตรวจสอบ</p>
+                                <p class="text-xs font-semibold text-gray-600">${inspectorName}</p>
+                            </div>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                            <p class="text-xs text-gray-500 mb-1">สถานะ</p>
-                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : 'text-amber-600'}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                            <p class="text-xs text-gray-500 mb-1">คะแนนที่ได้</p>
+                            <p class="font-bold text-3xl text-purple-main my-auto">${scoreDisplay}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                            <p class="text-xs text-gray-500 mb-1">ภาพเกียรติบัตรของคุณ</p>
+                            ${certImg}
                         </div>
                     `;
                 } else {
@@ -980,6 +1021,7 @@
         async function handleStudentSubmit(e) {
             e.preventDefault();
             const tel = document.getElementById('std-form-tel').value.trim();
+            const problem = document.getElementById('std-form-problem').value.trim();
             const scoreFileInput = document.getElementById('std-score-file');
             const certFileInput = document.getElementById('std-cert-file');
 
@@ -1013,7 +1055,8 @@
                     "ScorePhoto": scoreUrl,
                     "CertificatePhoto": certUrl,
                     "Verification": "กำลังตรวจสอบ",
-                    "Inspector": "-"
+                    "Inspector": "-",
+                    "ปัญหา": problem
                 };
 
                 const { data, error } = await db.from('regis').insert([payload]);
@@ -1057,10 +1100,101 @@
             }
         }
 
+        // Handle Teacher Login
+        async function handleTeacherLogin(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button');
+            const originalText = btn.innerHTML;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
+            btn.disabled = true;
+
+            try {
+                const emailInput = document.getElementById('tch-login-email').value.trim();
+                
+                // ค้นหาข้อมูลครูจากฐานข้อมูลทั้งหมด
+                const allTchs = await fetchAllRecords('data_teacher');
+                let tchData = null;
+                for (let t of allTchs) {
+                    if (getTchEmail(t) === emailInput) {
+                        tchData = t;
+                        break;
+                    }
+                }
+
+                if (!tchData) {
+                    Swal.fire('ไม่พบข้อมูล', `ไม่มี E-mail <b>${emailInput}</b> ในระบบ<br><br><span class="text-xs text-gray-500">(ตรวจสอบให้แน่ใจว่ากรอกตรงกับในฐานข้อมูล)</span>`, 'error');
+                    return;
+                }
+
+                currentTeacherData = tchData;
+                const tEmail = getTchEmail(tchData);
+
+                // ตรวจสอบว่าเคยส่งข้อมูลไปหรือยังจากตาราง regis
+                const { data: regisData } = await db.from('regis').select('*').eq('Student ID/E-mail', tEmail).maybeSingle();
+
+                switchView('teacher-form');
+
+                // เติมข้อมูลส่วนตัวลงในฟอร์ม
+                document.getElementById('tch-form-email').value = tEmail;
+                document.getElementById('tch-form-name').value = getTchName(tchData);
+                document.getElementById('tch-form-class').value = getTchClass(tchData);
+
+                // หากเคยกรอกข้อมูลแล้ว ให้แสดงหน้าต่างสถานะ และซ่อนฟอร์ม
+                if (regisData) {
+                    // แสดงหน้าต่างแจ้งเตือน
+                    Swal.fire({
+                        title: 'ข้อมูลถูกส่งแล้ว',
+                        text: 'ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น',
+                        icon: 'info',
+                        confirmButtonColor: '#5b21b6'
+                    });
+
+                    document.getElementById('teacher-status-box').classList.remove('hidden');
+                    document.getElementById('teacher-submit-form').classList.add('hidden');
+
+                    const scoreDisplay = regisData['Score'] !== null && regisData['Score'] !== undefined && regisData['Score'] !== '' ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ';
+                    const inspectorName = (regisData['Inspector'] && regisData['Inspector'] !== '-') ? regisData['Inspector'] : 'รอการประเมิน';
+                    const certImg = regisData['CertificatePhoto'] ? `<img src="${regisData['CertificatePhoto']}" class="w-full h-28 object-contain rounded-lg border border-gray-200 mt-2 cursor-pointer hover:opacity-80 transition" onclick="window.open('${regisData['CertificatePhoto']}', '_blank')" title="คลิกเพื่อดูรูปใหญ่">` : '<p class="text-sm text-gray-400 mt-2">ไม่พบภาพเกียรติบัตร</p>';
+
+                    document.getElementById('teacher-verified-result').innerHTML = `
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                            <div class="absolute top-0 left-0 w-full h-1 ${regisData['Verification'] === 'ผ่าน' ? 'bg-green-500' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'bg-red-500' : 'bg-amber-400')}"></div>
+                            <p class="text-xs text-gray-500 mb-1 mt-2">สถานะการตรวจสอบ</p>
+                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'text-red-600' : 'text-amber-600')}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
+                            <div class="mt-2 pt-2 border-t border-gray-100 w-full text-center">
+                                <p class="text-[10px] text-gray-400">ผู้ตรวจสอบ</p>
+                                <p class="text-xs font-semibold text-gray-600">${inspectorName}</p>
+                            </div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
+                            <p class="text-xs text-gray-500 mb-1">คะแนนที่ได้</p>
+                            <p class="font-bold text-3xl text-purple-main my-auto">${scoreDisplay}</p>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
+                            <p class="text-xs text-gray-500 mb-1">ภาพเกียรติบัตรของคุณ</p>
+                            ${certImg}
+                        </div>
+                    `;
+                } else {
+                    // หากยังไม่เคยส่ง ให้แสดงแบบฟอร์มตามปกติ
+                    document.getElementById('teacher-status-box').classList.add('hidden');
+                    document.getElementById('teacher-submit-form').classList.remove('hidden');
+                }
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('ข้อผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error');
+            } finally {
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+            }
+        }
+
         // Submit Teacher
         async function handleTeacherSubmit(e) {
             e.preventDefault();
             const tel = document.getElementById('tch-form-tel').value.trim();
+            const problem = document.getElementById('tch-form-problem').value.trim();
             const scoreFileInput = document.getElementById('tch-score-file');
             const certFileInput = document.getElementById('tch-cert-file');
 
@@ -1090,7 +1224,8 @@
                     "ScorePhoto": scoreUrl,
                     "CertificatePhoto": certUrl,
                     "Verification": "กำลังตรวจสอบ",
-                    "Inspector": "-"
+                    "Inspector": "-",
+                    "ปัญหา": problem
                 };
 
                 const { error } = await db.from('regis').insert([payload]);
