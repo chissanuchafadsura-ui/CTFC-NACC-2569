@@ -189,13 +189,18 @@
             
             <!-- Dashboard View -->
             <div id="dashboard-view" class="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 md:p-8 fade-in">
-                <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
+                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 border-b border-gray-100 pb-4 gap-4">
                     <h2 class="text-xl md:text-2xl font-bold text-purple-main flex items-center gap-3">
                         <i class="fa-solid fa-chart-pie text-gold-main"></i> Dashboard สรุปการส่งข้อมูล
                     </h2>
-                    <button onclick="loadDashboard()" class="text-gray-400 hover:text-purple-main transition">
-                        <i class="fa-solid fa-rotate-right"></i> รีเฟรช
-                    </button>
+                    <div class="flex items-center gap-3 w-full md:w-auto">
+                        <select id="dashboard-class-select" onchange="onDashboardClassChange(this.value)" class="modern-input font-medium cursor-pointer border-purple-200">
+                            <option value="">-- กรุณาเลือกระดับชั้น/ห้องเรียน --</option>
+                        </select>
+                        <button onclick="loadDashboard()" class="text-gray-400 hover:text-purple-main transition p-2" title="รีเฟรช">
+                            <i class="fa-solid fa-rotate-right text-lg"></i>
+                        </button>
+                    </div>
                 </div>
                 <div id="dashboard-list" class="space-y-4">
                     <p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูล Dashboard...</p>
@@ -597,14 +602,14 @@
         }
 
         // --- Helper สำหรับดึงข้อมูลทั้งหมด (แก้ปัญหา Supabase จำกัดการดึงแค่ 1000 แถว) ---
-        async function fetchAllRecords(tableName) {
+        async function fetchAllRecords(tableName, selectQuery = '*') {
             let allData = [];
             let from = 0;
             const limit = 1000;
             let hasMore = true;
             
             while (hasMore) {
-                const { data, error } = await db.from(tableName).select('*').range(from, from + limit - 1);
+                const { data, error } = await db.from(tableName).select(selectQuery).range(from, from + limit - 1);
                 if (error) throw error;
                 if (data && data.length > 0) {
                     allData.push(...data);
@@ -657,25 +662,83 @@
             input.value = formatted;
         }
 
-        // Load Dashboard Data Safely
+        // Load Dashboard Data Safely & Fetch Classes for Filter Dropdown
         async function loadDashboard() {
+            const selectEl = document.getElementById('dashboard-class-select');
             const list = document.getElementById('dashboard-list');
-            list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูล...</p>';
+            list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังดึงระดับชั้น...</p>';
 
             try {
-                const students = await fetchAllRecords('data_student');
-                const regis = await fetchAllRecords('regis');
-                const teachers = await fetchAllRecords('data_teacher');
-
-                if (!students || students.length === 0) {
+                // ดึงเฉพาะคอลัมน์ Class ของนักเรียน (ใช้ Bandwidth น้อยมาก ป้องกัน Egress Quota เกิน)
+                const classData = await fetchAllRecords('data_student', 'Class');
+                
+                if (!classData || classData.length === 0) {
                     list.innerHTML = `
                         <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                             <i class="fa-solid fa-folder-open text-gray-300 text-4xl mb-2"></i>
                             <p class="text-gray-500">ยังไม่มีข้อมูลนักเรียนในฐานข้อมูล</p>
-                            <p class="text-xs text-gray-400 mt-1">กรุณาเพิ่มข้อมูลในตาราง data_student</p>
                         </div>`;
                     return;
                 }
+
+                const uniqueClasses = [...new Set(classData.map(s => getStdClass(s)).filter(Boolean))]
+                    .sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
+
+                const currentValue = selectEl.value;
+                selectEl.innerHTML = '<option value="">-- กรุณาเลือกระดับชั้น/ห้องเรียน --</option>';
+                uniqueClasses.forEach(cls => {
+                    selectEl.innerHTML += `<option value="${cls}" ${currentValue === cls ? 'selected' : ''}>ระดับชั้น ${cls}</option>`;
+                });
+
+                if (!selectEl.value) {
+                    list.innerHTML = `
+                        <div class="text-center py-12 bg-purple-50/50 rounded-2xl border border-purple-100">
+                            <i class="fa-solid fa-filter text-purple-400 text-5xl mb-3"></i>
+                            <h3 class="text-lg font-bold text-purple-main">กรุณาเลือกระดับชั้น/ห้องเรียนด้านบน</h3>
+                            <p class="text-sm text-gray-500 mt-1">เลือกระดับชั้นเพื่อดึงข้อมูลสรุปการส่งเกียรติบัตรเฉพาะห้องนั้นๆ (ช่วยประหยัด Bandwidth ของระบบ)</p>
+                        </div>`;
+                    return;
+                }
+
+                await loadDashboardForClass(selectEl.value);
+
+            } catch (err) {
+                console.error(err);
+                list.innerHTML = `
+                    <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-2"></i>
+                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</p>
+                        <p class="text-sm text-red-600 mt-1">${err.message}</p>
+                    </div>`;
+            }
+        }
+
+        async function onDashboardClassChange(cls) {
+            if (!cls) {
+                document.getElementById('dashboard-list').innerHTML = `
+                    <div class="text-center py-12 bg-purple-50/50 rounded-2xl border border-purple-100">
+                        <i class="fa-solid fa-filter text-purple-400 text-5xl mb-3"></i>
+                        <h3 class="text-lg font-bold text-purple-main">กรุณาเลือกระดับชั้น/ห้องเรียนด้านบน</h3>
+                        <p class="text-sm text-gray-500 mt-1">เลือกระดับชั้นเพื่อดึงข้อมูลสรุปการส่งเกียรติบัตรเฉพาะห้องนั้นๆ</p>
+                    </div>`;
+                return;
+            }
+            await loadDashboardForClass(cls);
+        }
+
+        async function loadDashboardForClass(targetClass) {
+            const list = document.getElementById('dashboard-list');
+            list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูลระดับชั้น ' + targetClass + '...</p>';
+
+            try {
+                // ดึงเฉพาะนักเรียนในห้องที่เลือก
+                const targetNorm = normalizeClass(targetClass);
+                const allStds = await fetchAllRecords('data_student');
+                const students = allStds.filter(s => normalizeClass(getStdClass(s)) === targetNorm);
+
+                // ดึงเฉพาะคอลัมน์ที่จำเป็น (ไม่ดึง ScorePhoto, CertificatePhoto ที่เป็น Base64 ขนาดใหญ่)
+                const regis = await fetchAllRecords('regis', '"Student ID/E-mail", Verification, Score, Inspector');
+                const teachers = await fetchAllRecords('data_teacher');
 
                 const regisIds = new Set((regis || []).map(r => getStdId(r)));
                 let subCount = 0;
@@ -684,135 +747,76 @@
                 const unSubCount = totalCount - subCount;
                 const percent = totalCount > 0 ? Math.round((subCount / totalCount) * 100) : 0;
 
-                // Map ครูตามระดับชั้น (รองรับครูประจำชั้นหลายคนในห้องเดียวกัน)
-                const teacherMap = {};
-                (teachers || []).forEach(t => {
-                    const c = getTchClass(t);
-                    if (c) {
-                        if (!teacherMap[c]) teacherMap[c] = [];
-                        teacherMap[c].push(t);
-                    }
-                });
-
-                // จัดกลุ่มนักเรียนตามห้อง
-                const classGroups = {};
-                students.forEach(s => {
-                    const cls = getStdClass(s) || 'ไม่ระบุ';
-                    if (!classGroups[cls]) classGroups[cls] = [];
-                    classGroups[cls].push(s);
-                });
-
-                // เรียงลำดับชั้นเรียน
-                const sortedClasses = Object.keys(classGroups).sort((a, b) => 
-                    a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})
-                );
-
-                // สร้าง Accordion ของแต่ละห้อง
-                let classAccordionHTML = '';
-                sortedClasses.forEach((cls, idx) => {
-                    const classStds = classGroups[cls];
-                    // เรียงนักเรียนตามเลขที่
-                    classStds.sort((a, b) => (parseInt(getStdNo(a)) || 0) - (parseInt(getStdNo(b)) || 0));
-
-                    let classSubCount = 0;
-                    classStds.forEach(s => { if (regisIds.has(getStdId(s))) classSubCount++; });
-                    const classPercent = classStds.length > 0 ? Math.round((classSubCount / classStds.length) * 100) : 0;
-
-                    // รายชื่อครูที่ปรึกษาประจำชั้น (แสดงทุกคน)
-                    const tchList = teacherMap[cls] || [];
-                    let tchHTML = '';
-                    if (tchList.length > 0) {
-                        tchHTML = tchList.map(tchObj => {
-                            const tchName = getTchName(tchObj);
-                            const tchEmail = getTchEmail(tchObj);
-                            const isTchSub = tchEmail ? (regis || []).some(r => getStdId(r) === tchEmail) : false;
-                            return `
-                                <div class="tch-item flex items-center justify-between p-3 bg-purple-50/60 rounded-xl border border-purple-200 transition shadow-sm mt-2">
-                                    <div class="flex items-center space-x-3">
-                                        <div class="w-8 h-8 rounded-full bg-purple-main text-white flex items-center justify-center font-bold text-xs">
-                                            <i class="fa-solid fa-chalkboard-user"></i>
-                                        </div>
-                                        <div>
-                                            <h4 class="font-bold text-purple-900 text-sm">ครูที่ปรึกษา: ${tchName}</h4>
-                                        </div>
-                                    </div>
-                                    <span class="${isTchSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                        ${isTchSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
-                                    </span>
-                                </div>
-                            `;
-                        }).join('');
-                    } else {
-                        tchHTML = `
-                            <div class="tch-item flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 transition shadow-sm mt-2">
+                // ครูที่ปรึกษาประจำชั้น
+                const tchList = (teachers || []).filter(t => normalizeClass(getTchClass(t)) === targetNorm);
+                let tchHTML = '';
+                if (tchList.length > 0) {
+                    tchHTML = tchList.map(tchObj => {
+                        const tchName = getTchName(tchObj);
+                        const tchEmail = getTchEmail(tchObj);
+                        const isTchSub = tchEmail ? (regis || []).some(r => getStdId(r) === tchEmail) : false;
+                        return `
+                            <div class="tch-item flex items-center justify-between p-3 bg-purple-50/60 rounded-xl border border-purple-200 transition shadow-sm mt-2">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-xs">
+                                    <div class="w-8 h-8 rounded-full bg-purple-main text-white flex items-center justify-center font-bold text-xs">
                                         <i class="fa-solid fa-chalkboard-user"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-gray-700 text-sm">ครูที่ปรึกษา: ไม่ระบุ</h4>
+                                        <h4 class="font-bold text-purple-900 text-sm">ครูที่ปรึกษา: ${tchName}</h4>
                                     </div>
                                 </div>
+                                <span class="${isTchSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                    ${isTchSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
+                                </span>
                             </div>
                         `;
-                    }
-
-                    classAccordionHTML += `
-                        <div class="class-accordion-item border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm mb-3">
-                            <!-- Accordion Header (ปุ่มกดดรอปดาวน์) -->
-                            <button onclick="toggleAccordion('class-content-${idx}', 'chevron-${idx}')" class="w-full text-left p-4 bg-gradient-to-r from-purple-50/70 to-white hover:bg-purple-100/50 transition flex items-center justify-between gap-3 focus:outline-none">
-                                <div class="flex items-center gap-3">
-                                    <span class="font-bold text-lg text-purple-main flex items-center gap-2">
-                                        <i class="fa-solid fa-users text-gold-main"></i> ${cls}
-                                    </span>
+                    }).join('');
+                } else {
+                    tchHTML = `
+                        <div class="tch-item flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 transition shadow-sm mt-2">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-xs">
+                                    <i class="fa-solid fa-chalkboard-user"></i>
                                 </div>
-                                <div class="flex items-center gap-3">
-                                    <span class="text-xs font-bold px-3 py-1 rounded-full ${classPercent === 100 ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-purple-100 text-purple-800 border border-purple-200'}">
-                                        ส่งแล้ว ${classSubCount}/${classStds.length} คน (${classPercent}%)
-                                    </span>
-                                    <i id="chevron-${idx}" class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300"></i>
-                                </div>
-                            </button>
-
-                            <!-- Accordion Content (ดร็อปลงมาแสดงข้อมูลนักเรียน + ครูที่ปรึกษาทุกคน) -->
-                            <div id="class-content-${idx}" class="hidden border-t border-gray-100 p-4 bg-gray-50/50 space-y-2">
-                                ${classStds.map(s => {
-                                    const sId = getStdId(s);
-                                    const isSub = regisIds.has(sId);
-                                    const name = getStdName(s);
-                                    const no = getStdNo(s);
-                                    return `
-                                        <div class="std-item flex items-center justify-between p-3 bg-white hover:bg-purple-50/30 rounded-xl border border-gray-100 transition shadow-sm">
-                                            <div class="flex items-center space-x-3">
-                                                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-main flex items-center justify-center font-bold text-xs">
-                                                    ${no}
-                                                </div>
-                                                <div>
-                                                    <h4 class="font-bold text-gray-800 text-sm">${name}</h4>
-                                                    <p class="text-xs text-gray-500">${cls} | เลขที่ ${no} | รหัส: ${sId}</p>
-                                                </div>
-                                            </div>
-                                            <span class="${isSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                                ${isSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
-                                            </span>
-                                        </div>
-                                    `;
-                                }).join('')}
-
-                                <!-- แสดงครูที่ปรึกษาทุกคนในห้องนี้ -->
-                                <div class="pt-2">
-                                    ${tchHTML}
+                                <div>
+                                    <h4 class="font-bold text-gray-700 text-sm">ครูที่ปรึกษา: ไม่ระบุ</h4>
                                 </div>
                             </div>
                         </div>
                     `;
-                });
+                }
+
+                // เรียงนักเรียนตามเลขที่
+                students.sort((a, b) => (parseInt(getStdNo(a)) || 0) - (parseInt(getStdNo(b)) || 0));
+
+                let studentListHTML = students.map(s => {
+                    const sId = getStdId(s);
+                    const isSub = regisIds.has(sId);
+                    const name = getStdName(s);
+                    const no = getStdNo(s);
+                    return `
+                        <div class="std-item flex items-center justify-between p-3 bg-white hover:bg-purple-50/30 rounded-xl border border-gray-100 transition shadow-sm">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-main flex items-center justify-center font-bold text-xs">
+                                    ${no}
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800 text-sm">${name}</h4>
+                                    <p class="text-xs text-gray-500">${targetClass} | เลขที่ ${no} | รหัส: ${sId}</p>
+                                </div>
+                            </div>
+                            <span class="${isSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                ${isSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
 
                 list.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div class="bg-purple-50 border border-purple-100 p-4 rounded-2xl flex items-center justify-between">
                             <div>
-                                <p class="text-xs text-purple-600 font-medium">นักเรียนทั้งหมด</p>
+                                <p class="text-xs text-purple-600 font-medium">นักเรียนห้อง ${targetClass}</p>
                                 <p class="text-2xl font-bold text-purple-main">${totalCount} คน</p>
                             </div>
                             <div class="w-10 h-10 bg-purple-main text-white rounded-xl flex items-center justify-center">
@@ -839,8 +843,17 @@
                         </div>
                     </div>
 
-                    <div id="dashboard-student-container">
-                        ${classAccordionHTML}
+                    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3">
+                        <div class="font-bold text-lg text-purple-main border-b border-gray-100 pb-2 flex items-center justify-between">
+                            <span><i class="fa-solid fa-users text-gold-main mr-2"></i>รายชื่อนักเรียนระดับชั้น ${targetClass}</span>
+                            <span class="text-xs text-gray-500 font-normal">ทั้งหมด ${totalCount} คน</span>
+                        </div>
+                        <div class="space-y-2">
+                            ${studentListHTML}
+                        </div>
+                        <div class="pt-2 border-t border-gray-100">
+                            ${tchHTML}
+                        </div>
                     </div>
                 `;
             } catch (err) {
@@ -848,9 +861,8 @@
                 list.innerHTML = `
                     <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-2"></i>
-                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</p>
+                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการดึงข้อมูล</p>
                         <p class="text-sm text-red-600 mt-1">${err.message}</p>
-                        <p class="text-xs text-red-500 mt-2">โปรดตรวจสอบ API Key ปิด RLS แล้ว และตารางมีอยู่จริง</p>
                     </div>`;
             }
         }
@@ -1295,7 +1307,8 @@
 
             try {
                 const allStds = await fetchAllRecords('data_student');
-                const allRegis = await fetchAllRecords('regis');
+                // ดึงข้อมูล regis เฉพาะคอลัมน์ที่ไม่ใช่รูปภาพ Base64
+                const allRegis = await fetchAllRecords('regis', '"Student ID/E-mail", Verification, Score, Inspector, "Tel.", "Class"');
                 const allTchs = await fetchAllRecords('data_teacher');
 
                 let stds, regis;
@@ -1387,7 +1400,7 @@
                         const regItem = rMap[sId] || null;
                         const isSub = !!regItem;
                         
-                        // เก็บข้อมูลไว้ใน Store โดยใช้ sId ป้องกัน Inline JSON syntax error
+                        // เก็บข้อมูลไว้ใน Store โดยใช้ sId
                         window.naccDataStore[sId] = { student: s, regis: regItem };
 
                         grid.innerHTML += `
@@ -1416,10 +1429,22 @@
             }
         }
 
-        // Helper สำหรับคลิกการ์ด NACC อย่างปลอดภัย
-        function handleNaccCardClick(sId) {
+        // Helper สำหรับคลิกการ์ด NACC อย่างปลอดภัย (ดึงรูปภาพเฉพาะเมื่อเปิดตรวจเท่านั้น)
+        async function handleNaccCardClick(sId) {
             const data = window.naccDataStore[sId];
-            if (data) {
+            if (!data || !data.regis) {
+                Swal.fire('แจ้งเตือน', 'นักเรียนคนนี้ยังไม่ได้ส่งหลักฐานเข้าระบบ', 'info');
+                return;
+            }
+
+            Swal.fire({ title: 'กำลังดึงหลักฐาน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+            try {
+                // ดึงข้อมูลหลักฐานรูปภาพเต็มเฉพาะคนนี้ตอนกดตรวจ
+                const { data: fullRegis } = await db.from('regis').select('*').eq('Student ID/E-mail', sId).maybeSingle();
+                Swal.close();
+                openNaccModal(data.student, fullRegis || data.regis);
+            } catch (err) {
+                Swal.close();
                 openNaccModal(data.student, data.regis);
             }
         }
