@@ -131,7 +131,7 @@
     </header>
 
     <!-- Description Alert -->
-    <div class="max-w-6xl mx-auto w-full px-4 mt-8">
+    <div class="max-w-6xl mx-auto w-full px-4 mt-8 hidden">
         <div class="bg-gradient-to-r from-purple-light to-white border-l-4 border-purple-main p-5 rounded-2xl shadow-sm flex items-start gap-4">
             <div class="mt-1">
                 <div class="bg-purple-main text-white rounded-full w-8 h-8 flex items-center justify-center shadow-md">
@@ -151,25 +151,25 @@
     <!-- Main Application Area -->
     <main class="max-w-6xl mx-auto w-full px-4 py-8 flex-grow">
         
-        <!-- Navigation / Role Selection -->
-        <div id="nav-menu" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
-            <!-- Student Btn -->
-            <button onclick="switchView('student-login')" class="group relative overflow-hidden bg-white border border-gray-100 p-6 rounded-3xl shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-main to-gold-main opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 mx-auto bg-purple-light rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fa-solid fa-user-graduate text-3xl text-purple-main"></i>
-                </div>
-                <h3 class="font-bold text-lg text-gray-800">1. เข้าสู่ระบบนักเรียน</h3>
-                <p class="text-xs text-gray-400 mt-2">สำหรับนักเรียนส่งหลักฐาน</p>
-            </button>
+        <!-- Maintenance Message -->
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 md:p-12 text-center fade-in w-full max-w-3xl mx-auto relative overflow-hidden mt-2 mb-10">
+            <div class="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-purple-main via-gold-main to-purple-main"></div>
+            <div class="w-24 h-24 bg-purple-50 rounded-full flex items-center justify-center mx-auto mb-6 shadow-soft hover:scale-110 transition-transform duration-300">
+                <i class="fa-solid fa-screwdriver-wrench text-5xl text-gold-main"></i>
+            </div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">ปิดปรับปรุงระบบ</h2>
+            <p class="text-lg text-gray-600 mb-6">
+                โปรดกลับเข้าใหม่ในวันที่ <br class="md:hidden">
+                <strong class="text-purple-main text-xl bg-purple-50 px-5 py-3 rounded-xl inline-block mt-3 border border-purple-100 shadow-sm">1 กันยายน 2569 เวลา 16.00 น.</strong>
+            </p>
+            <p class="text-sm text-gray-500">ขออภัยในความไม่สะดวก ระบบกำลังอยู่ในระหว่างการตรวจสอบและบำรุงรักษา</p>
+        </div>
 
-            <!-- Teacher Btn -->
-            <button onclick="switchView('teacher-login')" class="group relative overflow-hidden bg-white border border-gray-100 p-6 rounded-3xl shadow-soft hover:shadow-xl transition-all duration-300 hover:-translate-y-1 text-center">
-                <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-main to-gold-main opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                <div class="w-16 h-16 mx-auto bg-purple-light rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300">
-                    <i class="fa-solid fa-chalkboard-user text-3xl text-purple-main"></i>
-                </div>
-                <h3 class="font-bold text-lg text-gray-800">2. เข้าสู่ระบบครู</h3>
+        <!-- Application Content (Hidden during maintenance) -->
+        <div class="hidden">
+            <!-- Navigation / Role Selection -->
+            <div id="nav-menu" class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10 fade-in">
+                <!-- Student Btn -->
                 <p class="text-xs text-gray-400 mt-2">สำหรับบุคลากรครู</p>
             </button>
 
@@ -189,18 +189,13 @@
             
             <!-- Dashboard View -->
             <div id="dashboard-view" class="bg-white rounded-3xl shadow-soft border border-gray-100 p-6 md:p-8 fade-in">
-                <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-6 border-b border-gray-100 pb-4 gap-4">
+                <div class="flex items-center justify-between mb-6 border-b border-gray-100 pb-4">
                     <h2 class="text-xl md:text-2xl font-bold text-purple-main flex items-center gap-3">
                         <i class="fa-solid fa-chart-pie text-gold-main"></i> Dashboard สรุปการส่งข้อมูล
                     </h2>
-                    <div class="flex items-center gap-3 w-full md:w-auto">
-                        <select id="dashboard-class-select" onchange="onDashboardClassChange(this.value)" class="modern-input font-medium cursor-pointer border-purple-200">
-                            <option value="">-- กรุณาเลือกระดับชั้น/ห้องเรียน --</option>
-                        </select>
-                        <button onclick="loadDashboard()" class="text-gray-400 hover:text-purple-main transition p-2" title="รีเฟรช">
-                            <i class="fa-solid fa-rotate-right text-lg"></i>
-                        </button>
-                    </div>
+                    <button onclick="loadDashboard()" class="text-gray-400 hover:text-purple-main transition">
+                        <i class="fa-solid fa-rotate-right"></i> รีเฟรช
+                    </button>
                 </div>
                 <div id="dashboard-list" class="space-y-4">
                     <p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูล Dashboard...</p>
@@ -245,9 +240,9 @@
                 <div id="student-status-box" class="hidden mb-8 p-6 bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl shadow-sm">
                     <div class="flex items-center gap-3 mb-4 border-b border-green-100 pb-4">
                         <i class="fa-solid fa-circle-check text-2xl text-green-500"></i>
-                        <h3 class="text-green-700 font-bold text-lg">ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น</h3>
+                        <h3 class="text-green-700 font-bold text-lg">ท่านได้ส่งข้อมูลเข้าสู่ระบบเรียบร้อยแล้ว</h3>
                     </div>
-                    <div id="student-verified-result" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
+                    <div id="student-verified-result" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
                 </div>
 
                 <form id="student-submit-form" onsubmit="handleStudentSubmit(event)" class="space-y-8">
@@ -321,11 +316,6 @@
                         </div>
                     </div>
 
-                    <div class="pt-6 border-t border-gray-100">
-                        <label class="text-sm font-semibold text-gray-700 block mb-2">ปัญหาในการใช้ระบบอบรมหลักสูตรต้านทุจริตศึกษาออนไลน์ (ถ้ามี)</label>
-                        <textarea id="std-form-problem" rows="3" class="modern-input w-full resize-none" placeholder="ระบุปัญหาที่พบ หรือเว้นว่างไว้หากไม่มี"></textarea>
-                    </div>
-
                     <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark hover:from-purple-dark hover:to-purple-main text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
                         <i class="fa-solid fa-cloud-arrow-up mr-2"></i> บันทึกข้อมูลส่งหลักฐาน
                     </button>
@@ -360,16 +350,6 @@
                  <button onclick="switchView('dashboard')" class="text-gray-400 hover:text-purple-main mb-6 flex items-center gap-2 text-sm transition">
                     <i class="fa-solid fa-arrow-left"></i> ออกจากระบบ
                 </button>
-
-                <!-- Status Box (if already submitted) -->
-                <div id="teacher-status-box" class="hidden mb-8 p-6 bg-gradient-to-br from-green-50 to-white border border-green-100 rounded-2xl shadow-sm">
-                    <div class="flex items-center gap-3 mb-4 border-b border-green-100 pb-4">
-                        <i class="fa-solid fa-circle-check text-2xl text-green-500"></i>
-                        <h3 class="text-green-700 font-bold text-lg">ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น</h3>
-                    </div>
-                    <div id="teacher-verified-result" class="grid grid-cols-1 md:grid-cols-3 gap-6"></div>
-                </div>
-
                 <form id="teacher-submit-form" onsubmit="handleTeacherSubmit(event)" class="space-y-8">
                     <h2 class="text-2xl font-bold text-gray-800 border-b border-gray-100 pb-4">ส่งหลักฐาน (ครู)</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -410,11 +390,6 @@
                                 <img src="https://lh3.googleusercontent.com/d/1S6WzJiepwWHjrgKP8WpTvrp-UWFq-FYw=s800" alt="ตัวอย่างภาพเกียรติบัตร" class="w-full h-auto rounded-lg object-contain max-h-48 mx-auto border border-gray-100 shadow-sm">
                             </div>
                         </div>
-                    </div>
-
-                    <div class="pt-6 border-t border-gray-100">
-                        <label class="text-sm font-semibold text-gray-700 block mb-2">ปัญหาในการใช้ระบบอบรมหลักสูตรต้านทุจริตศึกษาออนไลน์ (ถ้ามี)</label>
-                        <textarea id="tch-form-problem" rows="3" class="modern-input w-full resize-none" placeholder="ระบุปัญหาที่พบ หรือเว้นว่างไว้หากไม่มี"></textarea>
                     </div>
 
                     <button type="submit" class="w-full bg-gradient-to-r from-purple-main to-purple-dark text-white font-bold py-4 rounded-xl text-lg shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1">
@@ -472,6 +447,7 @@
                 </div>
             </div>
 
+        </div>
         </div>
     </main>
 
@@ -602,14 +578,14 @@
         }
 
         // --- Helper สำหรับดึงข้อมูลทั้งหมด (แก้ปัญหา Supabase จำกัดการดึงแค่ 1000 แถว) ---
-        async function fetchAllRecords(tableName, selectQuery = '*') {
+        async function fetchAllRecords(tableName) {
             let allData = [];
             let from = 0;
             const limit = 1000;
             let hasMore = true;
             
             while (hasMore) {
-                const { data, error } = await db.from(tableName).select(selectQuery).range(from, from + limit - 1);
+                const { data, error } = await db.from(tableName).select('*').range(from, from + limit - 1);
                 if (error) throw error;
                 if (data && data.length > 0) {
                     allData.push(...data);
@@ -662,83 +638,25 @@
             input.value = formatted;
         }
 
-        // Load Dashboard Data Safely & Fetch Classes for Filter Dropdown
+        // Load Dashboard Data Safely
         async function loadDashboard() {
-            const selectEl = document.getElementById('dashboard-class-select');
             const list = document.getElementById('dashboard-list');
-            list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังดึงระดับชั้น...</p>';
+            list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูล...</p>';
 
             try {
-                // ดึงเฉพาะคอลัมน์ Class ของนักเรียน (ใช้ Bandwidth น้อยมาก ป้องกัน Egress Quota เกิน)
-                const classData = await fetchAllRecords('data_student', 'Class');
-                
-                if (!classData || classData.length === 0) {
+                const students = await fetchAllRecords('data_student');
+                const regis = await fetchAllRecords('regis');
+                const teachers = await fetchAllRecords('data_teacher');
+
+                if (!students || students.length === 0) {
                     list.innerHTML = `
                         <div class="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
                             <i class="fa-solid fa-folder-open text-gray-300 text-4xl mb-2"></i>
                             <p class="text-gray-500">ยังไม่มีข้อมูลนักเรียนในฐานข้อมูล</p>
+                            <p class="text-xs text-gray-400 mt-1">กรุณาเพิ่มข้อมูลในตาราง data_student</p>
                         </div>`;
                     return;
                 }
-
-                const uniqueClasses = [...new Set(classData.map(s => getStdClass(s)).filter(Boolean))]
-                    .sort((a, b) => a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'}));
-
-                const currentValue = selectEl.value;
-                selectEl.innerHTML = '<option value="">-- กรุณาเลือกระดับชั้น/ห้องเรียน --</option>';
-                uniqueClasses.forEach(cls => {
-                    selectEl.innerHTML += `<option value="${cls}" ${currentValue === cls ? 'selected' : ''}>ระดับชั้น ${cls}</option>`;
-                });
-
-                if (!selectEl.value) {
-                    list.innerHTML = `
-                        <div class="text-center py-12 bg-purple-50/50 rounded-2xl border border-purple-100">
-                            <i class="fa-solid fa-filter text-purple-400 text-5xl mb-3"></i>
-                            <h3 class="text-lg font-bold text-purple-main">กรุณาเลือกระดับชั้น/ห้องเรียนด้านบน</h3>
-                            <p class="text-sm text-gray-500 mt-1">เลือกระดับชั้นเพื่อดึงข้อมูลสรุปการส่งเกียรติบัตรเฉพาะห้องนั้นๆ (ช่วยประหยัด Bandwidth ของระบบ)</p>
-                        </div>`;
-                    return;
-                }
-
-                await loadDashboardForClass(selectEl.value);
-
-            } catch (err) {
-                console.error(err);
-                list.innerHTML = `
-                    <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
-                        <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-2"></i>
-                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</p>
-                        <p class="text-sm text-red-600 mt-1">${err.message}</p>
-                    </div>`;
-            }
-        }
-
-        async function onDashboardClassChange(cls) {
-            if (!cls) {
-                document.getElementById('dashboard-list').innerHTML = `
-                    <div class="text-center py-12 bg-purple-50/50 rounded-2xl border border-purple-100">
-                        <i class="fa-solid fa-filter text-purple-400 text-5xl mb-3"></i>
-                        <h3 class="text-lg font-bold text-purple-main">กรุณาเลือกระดับชั้น/ห้องเรียนด้านบน</h3>
-                        <p class="text-sm text-gray-500 mt-1">เลือกระดับชั้นเพื่อดึงข้อมูลสรุปการส่งเกียรติบัตรเฉพาะห้องนั้นๆ</p>
-                    </div>`;
-                return;
-            }
-            await loadDashboardForClass(cls);
-        }
-
-        async function loadDashboardForClass(targetClass) {
-            const list = document.getElementById('dashboard-list');
-            list.innerHTML = '<p class="text-center py-8 text-gray-400"><i class="fa-solid fa-spinner fa-spin text-2xl mb-2 block"></i> กำลังโหลดข้อมูลระดับชั้น ' + targetClass + '...</p>';
-
-            try {
-                // ดึงเฉพาะนักเรียนในห้องที่เลือก
-                const targetNorm = normalizeClass(targetClass);
-                const allStds = await fetchAllRecords('data_student');
-                const students = allStds.filter(s => normalizeClass(getStdClass(s)) === targetNorm);
-
-                // ดึงเฉพาะคอลัมน์ที่จำเป็น (ไม่ดึง ScorePhoto, CertificatePhoto ที่เป็น Base64 ขนาดใหญ่)
-                const regis = await fetchAllRecords('regis', '"Student ID/E-mail", Verification, Score, Inspector');
-                const teachers = await fetchAllRecords('data_teacher');
 
                 const regisIds = new Set((regis || []).map(r => getStdId(r)));
                 let subCount = 0;
@@ -747,76 +665,135 @@
                 const unSubCount = totalCount - subCount;
                 const percent = totalCount > 0 ? Math.round((subCount / totalCount) * 100) : 0;
 
-                // ครูที่ปรึกษาประจำชั้น
-                const tchList = (teachers || []).filter(t => normalizeClass(getTchClass(t)) === targetNorm);
-                let tchHTML = '';
-                if (tchList.length > 0) {
-                    tchHTML = tchList.map(tchObj => {
-                        const tchName = getTchName(tchObj);
-                        const tchEmail = getTchEmail(tchObj);
-                        const isTchSub = tchEmail ? (regis || []).some(r => getStdId(r) === tchEmail) : false;
-                        return `
-                            <div class="tch-item flex items-center justify-between p-3 bg-purple-50/60 rounded-xl border border-purple-200 transition shadow-sm mt-2">
+                // Map ครูตามระดับชั้น (รองรับครูประจำชั้นหลายคนในห้องเดียวกัน)
+                const teacherMap = {};
+                (teachers || []).forEach(t => {
+                    const c = getTchClass(t);
+                    if (c) {
+                        if (!teacherMap[c]) teacherMap[c] = [];
+                        teacherMap[c].push(t);
+                    }
+                });
+
+                // จัดกลุ่มนักเรียนตามห้อง
+                const classGroups = {};
+                students.forEach(s => {
+                    const cls = getStdClass(s) || 'ไม่ระบุ';
+                    if (!classGroups[cls]) classGroups[cls] = [];
+                    classGroups[cls].push(s);
+                });
+
+                // เรียงลำดับชั้นเรียน
+                const sortedClasses = Object.keys(classGroups).sort((a, b) => 
+                    a.localeCompare(b, undefined, {numeric: true, sensitivity: 'base'})
+                );
+
+                // สร้าง Accordion ของแต่ละห้อง
+                let classAccordionHTML = '';
+                sortedClasses.forEach((cls, idx) => {
+                    const classStds = classGroups[cls];
+                    // เรียงนักเรียนตามเลขที่
+                    classStds.sort((a, b) => (parseInt(getStdNo(a)) || 0) - (parseInt(getStdNo(b)) || 0));
+
+                    let classSubCount = 0;
+                    classStds.forEach(s => { if (regisIds.has(getStdId(s))) classSubCount++; });
+                    const classPercent = classStds.length > 0 ? Math.round((classSubCount / classStds.length) * 100) : 0;
+
+                    // รายชื่อครูที่ปรึกษาประจำชั้น (แสดงทุกคน)
+                    const tchList = teacherMap[cls] || [];
+                    let tchHTML = '';
+                    if (tchList.length > 0) {
+                        tchHTML = tchList.map(tchObj => {
+                            const tchName = getTchName(tchObj);
+                            const tchEmail = getTchEmail(tchObj);
+                            const isTchSub = tchEmail ? (regis || []).some(r => getStdId(r) === tchEmail) : false;
+                            return `
+                                <div class="tch-item flex items-center justify-between p-3 bg-purple-50/60 rounded-xl border border-purple-200 transition shadow-sm mt-2">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="w-8 h-8 rounded-full bg-purple-main text-white flex items-center justify-center font-bold text-xs">
+                                            <i class="fa-solid fa-chalkboard-user"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-bold text-purple-900 text-sm">ครูที่ปรึกษา: ${tchName}</h4>
+                                        </div>
+                                    </div>
+                                    <span class="${isTchSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                        ${isTchSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
+                                    </span>
+                                </div>
+                            `;
+                        }).join('');
+                    } else {
+                        tchHTML = `
+                            <div class="tch-item flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 transition shadow-sm mt-2">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-full bg-purple-main text-white flex items-center justify-center font-bold text-xs">
+                                    <div class="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-xs">
                                         <i class="fa-solid fa-chalkboard-user"></i>
                                     </div>
                                     <div>
-                                        <h4 class="font-bold text-purple-900 text-sm">ครูที่ปรึกษา: ${tchName}</h4>
+                                        <h4 class="font-bold text-gray-700 text-sm">ครูที่ปรึกษา: ไม่ระบุ</h4>
                                     </div>
                                 </div>
-                                <span class="${isTchSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                    ${isTchSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
-                                </span>
                             </div>
                         `;
-                    }).join('');
-                } else {
-                    tchHTML = `
-                        <div class="tch-item flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-200 transition shadow-sm mt-2">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-gray-400 text-white flex items-center justify-center font-bold text-xs">
-                                    <i class="fa-solid fa-chalkboard-user"></i>
+                    }
+
+                    classAccordionHTML += `
+                        <div class="class-accordion-item border border-gray-200 rounded-2xl overflow-hidden bg-white shadow-sm mb-3">
+                            <!-- Accordion Header (ปุ่มกดดรอปดาวน์) -->
+                            <button onclick="toggleAccordion('class-content-${idx}', 'chevron-${idx}')" class="w-full text-left p-4 bg-gradient-to-r from-purple-50/70 to-white hover:bg-purple-100/50 transition flex items-center justify-between gap-3 focus:outline-none">
+                                <div class="flex items-center gap-3">
+                                    <span class="font-bold text-lg text-purple-main flex items-center gap-2">
+                                        <i class="fa-solid fa-users text-gold-main"></i> ${cls}
+                                    </span>
                                 </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-700 text-sm">ครูที่ปรึกษา: ไม่ระบุ</h4>
+                                <div class="flex items-center gap-3">
+                                    <span class="text-xs font-bold px-3 py-1 rounded-full ${classPercent === 100 ? 'bg-green-100 text-green-700 border border-green-200' : 'bg-purple-100 text-purple-800 border border-purple-200'}">
+                                        ส่งแล้ว ${classSubCount}/${classStds.length} คน (${classPercent}%)
+                                    </span>
+                                    <i id="chevron-${idx}" class="fa-solid fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                                </div>
+                            </button>
+
+                            <!-- Accordion Content (ดร็อปลงมาแสดงข้อมูลนักเรียน + ครูที่ปรึกษาทุกคน) -->
+                            <div id="class-content-${idx}" class="hidden border-t border-gray-100 p-4 bg-gray-50/50 space-y-2">
+                                ${classStds.map(s => {
+                                    const sId = getStdId(s);
+                                    const isSub = regisIds.has(sId);
+                                    const name = getStdName(s);
+                                    const no = getStdNo(s);
+                                    return `
+                                        <div class="std-item flex items-center justify-between p-3 bg-white hover:bg-purple-50/30 rounded-xl border border-gray-100 transition shadow-sm">
+                                            <div class="flex items-center space-x-3">
+                                                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-main flex items-center justify-center font-bold text-xs">
+                                                    ${no}
+                                                </div>
+                                                <div>
+                                                    <h4 class="font-bold text-gray-800 text-sm">${name}</h4>
+                                                    <p class="text-xs text-gray-500">${cls} | เลขที่ ${no} | รหัส: ${sId}</p>
+                                                </div>
+                                            </div>
+                                            <span class="${isSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                                                ${isSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
+                                            </span>
+                                        </div>
+                                    `;
+                                }).join('')}
+
+                                <!-- แสดงครูที่ปรึกษาทุกคนในห้องนี้ -->
+                                <div class="pt-2">
+                                    ${tchHTML}
                                 </div>
                             </div>
                         </div>
                     `;
-                }
-
-                // เรียงนักเรียนตามเลขที่
-                students.sort((a, b) => (parseInt(getStdNo(a)) || 0) - (parseInt(getStdNo(b)) || 0));
-
-                let studentListHTML = students.map(s => {
-                    const sId = getStdId(s);
-                    const isSub = regisIds.has(sId);
-                    const name = getStdName(s);
-                    const no = getStdNo(s);
-                    return `
-                        <div class="std-item flex items-center justify-between p-3 bg-white hover:bg-purple-50/30 rounded-xl border border-gray-100 transition shadow-sm">
-                            <div class="flex items-center space-x-3">
-                                <div class="w-8 h-8 rounded-full bg-purple-100 text-purple-main flex items-center justify-center font-bold text-xs">
-                                    ${no}
-                                </div>
-                                <div>
-                                    <h4 class="font-bold text-gray-800 text-sm">${name}</h4>
-                                    <p class="text-xs text-gray-500">${targetClass} | เลขที่ ${no} | รหัส: ${sId}</p>
-                                </div>
-                            </div>
-                            <span class="${isSub ? 'text-green-700 bg-green-100 border border-green-200' : 'text-red-600 bg-red-100 border border-red-200'} px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
-                                ${isSub ? '<i class="fa-solid fa-check"></i> ส่งข้อมูลแล้ว' : '<i class="fa-solid fa-xmark"></i> ยังไม่ส่ง'}
-                            </span>
-                        </div>
-                    `;
-                }).join('');
+                });
 
                 list.innerHTML = `
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                         <div class="bg-purple-50 border border-purple-100 p-4 rounded-2xl flex items-center justify-between">
                             <div>
-                                <p class="text-xs text-purple-600 font-medium">นักเรียนห้อง ${targetClass}</p>
+                                <p class="text-xs text-purple-600 font-medium">นักเรียนทั้งหมด</p>
                                 <p class="text-2xl font-bold text-purple-main">${totalCount} คน</p>
                             </div>
                             <div class="w-10 h-10 bg-purple-main text-white rounded-xl flex items-center justify-center">
@@ -843,17 +820,8 @@
                         </div>
                     </div>
 
-                    <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm space-y-3">
-                        <div class="font-bold text-lg text-purple-main border-b border-gray-100 pb-2 flex items-center justify-between">
-                            <span><i class="fa-solid fa-users text-gold-main mr-2"></i>รายชื่อนักเรียนระดับชั้น ${targetClass}</span>
-                            <span class="text-xs text-gray-500 font-normal">ทั้งหมด ${totalCount} คน</span>
-                        </div>
-                        <div class="space-y-2">
-                            ${studentListHTML}
-                        </div>
-                        <div class="pt-2 border-t border-gray-100">
-                            ${tchHTML}
-                        </div>
+                    <div id="dashboard-student-container">
+                        ${classAccordionHTML}
                     </div>
                 `;
             } catch (err) {
@@ -861,8 +829,9 @@
                 list.innerHTML = `
                     <div class="text-center py-8 bg-red-50 rounded-xl border border-red-200">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 text-4xl mb-2"></i>
-                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการดึงข้อมูล</p>
+                        <p class="text-red-700 font-bold mt-2">เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล</p>
                         <p class="text-sm text-red-600 mt-1">${err.message}</p>
+                        <p class="text-xs text-red-500 mt-2">โปรดตรวจสอบ API Key ปิด RLS แล้ว และตารางมีอยู่จริง</p>
                     </div>`;
             }
         }
@@ -953,38 +922,17 @@
                 document.getElementById('std-form-no').value = getStdNo(stdData);
 
                 if (regisData) {
-                    // แสดงหน้าต่างแจ้งเตือน
-                    Swal.fire({
-                        title: 'ข้อมูลถูกส่งแล้ว',
-                        text: 'ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น',
-                        icon: 'info',
-                        confirmButtonColor: '#5b21b6'
-                    });
-
                     document.getElementById('student-status-box').classList.remove('hidden');
                     document.getElementById('student-submit-form').classList.add('hidden');
 
-                    const scoreDisplay = regisData['Score'] !== null && regisData['Score'] !== undefined && regisData['Score'] !== '' ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ';
-                    const inspectorName = (regisData['Inspector'] && regisData['Inspector'] !== '-') ? regisData['Inspector'] : 'รอการประเมิน';
-                    const certImg = regisData['CertificatePhoto'] ? `<img src="${regisData['CertificatePhoto']}" class="w-full h-28 object-contain rounded-lg border border-gray-200 mt-2 cursor-pointer hover:opacity-80 transition" onclick="window.open('${regisData['CertificatePhoto']}', '_blank')" title="คลิกเพื่อดูรูปใหญ่">` : '<p class="text-sm text-gray-400 mt-2">ไม่พบภาพเกียรติบัตร</p>';
-
                     document.getElementById('student-verified-result').innerHTML = `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-full h-1 ${regisData['Verification'] === 'ผ่าน' ? 'bg-green-500' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'bg-red-500' : 'bg-amber-400')}"></div>
-                            <p class="text-xs text-gray-500 mb-1 mt-2">สถานะการตรวจสอบ</p>
-                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'text-red-600' : 'text-amber-600')}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
-                            <div class="mt-2 pt-2 border-t border-gray-100 w-full text-center">
-                                <p class="text-[10px] text-gray-400">ผู้ตรวจสอบ</p>
-                                <p class="text-xs font-semibold text-gray-600">${inspectorName}</p>
-                            </div>
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <p class="text-xs text-gray-500 mb-1">คะแนนประเมิน</p>
+                            <p class="font-bold text-2xl text-purple-main">${regisData['Score'] !== null && regisData['Score'] !== undefined ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ'}</p>
                         </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-                            <p class="text-xs text-gray-500 mb-1">คะแนนที่ได้</p>
-                            <p class="font-bold text-3xl text-purple-main my-auto">${scoreDisplay}</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-                            <p class="text-xs text-gray-500 mb-1">ภาพเกียรติบัตรของคุณ</p>
-                            ${certImg}
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <p class="text-xs text-gray-500 mb-1">สถานะ</p>
+                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : 'text-amber-600'}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
                         </div>
                     `;
                 } else {
@@ -1033,7 +981,6 @@
         async function handleStudentSubmit(e) {
             e.preventDefault();
             const tel = document.getElementById('std-form-tel').value.trim();
-            const problem = document.getElementById('std-form-problem').value.trim();
             const scoreFileInput = document.getElementById('std-score-file');
             const certFileInput = document.getElementById('std-cert-file');
 
@@ -1067,8 +1014,7 @@
                     "ScorePhoto": scoreUrl,
                     "CertificatePhoto": certUrl,
                     "Verification": "กำลังตรวจสอบ",
-                    "Inspector": "-",
-                    "ปัญหา": problem
+                    "Inspector": "-"
                 };
 
                 const { data, error } = await db.from('regis').insert([payload]);
@@ -1112,101 +1058,10 @@
             }
         }
 
-        // Handle Teacher Login
-        async function handleTeacherLogin(e) {
-            e.preventDefault();
-            const btn = e.target.querySelector('button');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> กำลังตรวจสอบ...';
-            btn.disabled = true;
-
-            try {
-                const emailInput = document.getElementById('tch-login-email').value.trim();
-                
-                // ค้นหาข้อมูลครูจากฐานข้อมูลทั้งหมด
-                const allTchs = await fetchAllRecords('data_teacher');
-                let tchData = null;
-                for (let t of allTchs) {
-                    if (getTchEmail(t) === emailInput) {
-                        tchData = t;
-                        break;
-                    }
-                }
-
-                if (!tchData) {
-                    Swal.fire('ไม่พบข้อมูล', `ไม่มี E-mail <b>${emailInput}</b> ในระบบ<br><br><span class="text-xs text-gray-500">(ตรวจสอบให้แน่ใจว่ากรอกตรงกับในฐานข้อมูล)</span>`, 'error');
-                    return;
-                }
-
-                currentTeacherData = tchData;
-                const tEmail = getTchEmail(tchData);
-
-                // ตรวจสอบว่าเคยส่งข้อมูลไปหรือยังจากตาราง regis
-                const { data: regisData } = await db.from('regis').select('*').eq('Student ID/E-mail', tEmail).maybeSingle();
-
-                switchView('teacher-form');
-
-                // เติมข้อมูลส่วนตัวลงในฟอร์ม
-                document.getElementById('tch-form-email').value = tEmail;
-                document.getElementById('tch-form-name').value = getTchName(tchData);
-                document.getElementById('tch-form-class').value = getTchClass(tchData);
-
-                // หากเคยกรอกข้อมูลแล้ว ให้แสดงหน้าต่างสถานะ และซ่อนฟอร์ม
-                if (regisData) {
-                    // แสดงหน้าต่างแจ้งเตือน
-                    Swal.fire({
-                        title: 'ข้อมูลถูกส่งแล้ว',
-                        text: 'ท่านได้กรอกข้อมูลเรียบร้อยเสร็จสิ้น',
-                        icon: 'info',
-                        confirmButtonColor: '#5b21b6'
-                    });
-
-                    document.getElementById('teacher-status-box').classList.remove('hidden');
-                    document.getElementById('teacher-submit-form').classList.add('hidden');
-
-                    const scoreDisplay = regisData['Score'] !== null && regisData['Score'] !== undefined && regisData['Score'] !== '' ? regisData['Score'] + ' <span class="text-lg">%</span>' : 'รอการตรวจ';
-                    const inspectorName = (regisData['Inspector'] && regisData['Inspector'] !== '-') ? regisData['Inspector'] : 'รอการประเมิน';
-                    const certImg = regisData['CertificatePhoto'] ? `<img src="${regisData['CertificatePhoto']}" class="w-full h-28 object-contain rounded-lg border border-gray-200 mt-2 cursor-pointer hover:opacity-80 transition" onclick="window.open('${regisData['CertificatePhoto']}', '_blank')" title="คลิกเพื่อดูรูปใหญ่">` : '<p class="text-sm text-gray-400 mt-2">ไม่พบภาพเกียรติบัตร</p>';
-
-                    document.getElementById('teacher-verified-result').innerHTML = `
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                            <div class="absolute top-0 left-0 w-full h-1 ${regisData['Verification'] === 'ผ่าน' ? 'bg-green-500' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'bg-red-500' : 'bg-amber-400')}"></div>
-                            <p class="text-xs text-gray-500 mb-1 mt-2">สถานะการตรวจสอบ</p>
-                            <p class="font-bold text-xl ${regisData['Verification'] === 'ผ่าน' ? 'text-green-600' : (regisData['Verification'] === 'ไม่ผ่าน' ? 'text-red-600' : 'text-amber-600')}">${regisData['Verification'] || 'กำลังตรวจสอบ'}</p>
-                            <div class="mt-2 pt-2 border-t border-gray-100 w-full text-center">
-                                <p class="text-[10px] text-gray-400">ผู้ตรวจสอบ</p>
-                                <p class="text-xs font-semibold text-gray-600">${inspectorName}</p>
-                            </div>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center text-center">
-                            <p class="text-xs text-gray-500 mb-1">คะแนนที่ได้</p>
-                            <p class="font-bold text-3xl text-purple-main my-auto">${scoreDisplay}</p>
-                        </div>
-                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 text-center flex flex-col items-center justify-center">
-                            <p class="text-xs text-gray-500 mb-1">ภาพเกียรติบัตรของคุณ</p>
-                            ${certImg}
-                        </div>
-                    `;
-                } else {
-                    // หากยังไม่เคยส่ง ให้แสดงแบบฟอร์มตามปกติ
-                    document.getElementById('teacher-status-box').classList.add('hidden');
-                    document.getElementById('teacher-submit-form').classList.remove('hidden');
-                }
-
-            } catch (err) {
-                console.error(err);
-                Swal.fire('ข้อผิดพลาด', 'ระบบขัดข้อง กรุณาลองใหม่', 'error');
-            } finally {
-                btn.innerHTML = originalText;
-                btn.disabled = false;
-            }
-        }
-
         // Submit Teacher
         async function handleTeacherSubmit(e) {
             e.preventDefault();
             const tel = document.getElementById('tch-form-tel').value.trim();
-            const problem = document.getElementById('tch-form-problem').value.trim();
             const scoreFileInput = document.getElementById('tch-score-file');
             const certFileInput = document.getElementById('tch-cert-file');
 
@@ -1236,8 +1091,7 @@
                     "ScorePhoto": scoreUrl,
                     "CertificatePhoto": certUrl,
                     "Verification": "กำลังตรวจสอบ",
-                    "Inspector": "-",
-                    "ปัญหา": problem
+                    "Inspector": "-"
                 };
 
                 const { error } = await db.from('regis').insert([payload]);
@@ -1307,8 +1161,7 @@
 
             try {
                 const allStds = await fetchAllRecords('data_student');
-                // ดึงข้อมูล regis เฉพาะคอลัมน์ที่ไม่ใช่รูปภาพ Base64
-                const allRegis = await fetchAllRecords('regis', '"Student ID/E-mail", Verification, Score, Inspector, "Tel.", "Class"');
+                const allRegis = await fetchAllRecords('regis');
                 const allTchs = await fetchAllRecords('data_teacher');
 
                 let stds, regis;
@@ -1400,7 +1253,7 @@
                         const regItem = rMap[sId] || null;
                         const isSub = !!regItem;
                         
-                        // เก็บข้อมูลไว้ใน Store โดยใช้ sId
+                        // เก็บข้อมูลไว้ใน Store โดยใช้ sId ป้องกัน Inline JSON syntax error
                         window.naccDataStore[sId] = { student: s, regis: regItem };
 
                         grid.innerHTML += `
@@ -1429,22 +1282,10 @@
             }
         }
 
-        // Helper สำหรับคลิกการ์ด NACC อย่างปลอดภัย (ดึงรูปภาพเฉพาะเมื่อเปิดตรวจเท่านั้น)
-        async function handleNaccCardClick(sId) {
+        // Helper สำหรับคลิกการ์ด NACC อย่างปลอดภัย
+        function handleNaccCardClick(sId) {
             const data = window.naccDataStore[sId];
-            if (!data || !data.regis) {
-                Swal.fire('แจ้งเตือน', 'นักเรียนคนนี้ยังไม่ได้ส่งหลักฐานเข้าระบบ', 'info');
-                return;
-            }
-
-            Swal.fire({ title: 'กำลังดึงหลักฐาน...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
-            try {
-                // ดึงข้อมูลหลักฐานรูปภาพเต็มเฉพาะคนนี้ตอนกดตรวจ
-                const { data: fullRegis } = await db.from('regis').select('*').eq('Student ID/E-mail', sId).maybeSingle();
-                Swal.close();
-                openNaccModal(data.student, fullRegis || data.regis);
-            } catch (err) {
-                Swal.close();
+            if (data) {
                 openNaccModal(data.student, data.regis);
             }
         }
