@@ -527,15 +527,12 @@
                 // Populate class dropdown
                 let rooms = Object.keys(res.data).sort();
                 let selectHtml = '<option value="">-- แสดงทุกระดับชั้น/ห้องเรียน --</option>';
-                let adminSelectHtml = '<option value="ทุกห้อง">ทุกห้อง</option>';
                 
                 rooms.forEach(r => {
                     selectHtml += `<option value="${r}">${r}</option>`;
-                    adminSelectHtml += `<option value="${r}">${r}</option>`;
                 });
                 
                 document.getElementById('dashboard-class-select').innerHTML = selectHtml;
-                document.getElementById('admin-room-select').innerHTML = adminSelectHtml;
 
                 renderDashboardList(rooms);
             }
@@ -693,6 +690,30 @@
             if(res && res.status === 'success') {
                 adminNameStr = res.adminName;
                 document.getElementById('admin-logged-name').innerText = adminNameStr;
+                
+                const roomSelect = document.getElementById('admin-room-select');
+                roomSelect.innerHTML = ''; 
+                
+                if (res.adminRooms && Array.isArray(res.adminRooms) && res.adminRooms.length > 0) {
+                    let hasRooms = false;
+                    res.adminRooms.forEach(room => {
+                        if(room && room.toString().trim() !== '') {
+                            const opt = document.createElement('option');
+                            opt.value = room.toString().trim();
+                            opt.innerText = room.toString().trim();
+                            roomSelect.appendChild(opt);
+                            hasRooms = true;
+                        }
+                    });
+                    
+                    if(!hasRooms) {
+                        roomSelect.innerHTML = '<option value="">ไม่มีข้อมูลห้องที่รับผิดชอบ</option>';
+                    }
+                } else {
+                    // หากไม่มีข้อมูลส่งกลับมา ให้แสดงทุกห้องเป็นค่าเริ่มต้น
+                    roomSelect.innerHTML = '<option value="ทุกห้อง">ทุกห้อง (ไม่ระบุเฉพาะ)</option>';
+                }
+
                 showSection('sec-admin-panel');
                 loadAdminRoom();
             } else if(res) {
