@@ -330,6 +330,12 @@
                     <input type="tel" id="f-phone" required maxlength="10" pattern="0\d{9}" placeholder="08XXXXXXXX" class="modern-input font-mono">
                 </div>
 
+                <!-- Problem Input -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">ปัญหาที่พบในการใช้ระบบอบรมหลักสูตรต้านทุจริตศึกษาออนไลน์ (ถ้ามี)</label>
+                    <textarea id="f-problem" rows="3" placeholder="ระบุปัญหาที่พบ เช่น ไม่สามารถเข้าสู่ระบบได้, วิดีโอไม่เล่น (ถ้าไม่มีให้เว้นว่างไว้)" class="modern-input text-sm"></textarea>
+                </div>
+
                 <!-- Image Upload Fields -->
                 <div class="grid md:grid-cols-2 gap-6">
                     <div class="bg-slate-50 p-5 rounded-2xl border border-dashed border-slate-300">
@@ -551,23 +557,43 @@
             rooms.forEach((room, index) => {
                 let d = dashboardDataCache[room];
                 let pct = Math.round((d.sent / d.total) * 100) || 0;
+                let roomTeacher = d.teacher || d.advisor || d.teacherName || d.teacher_name || d.advisorName || d.fullname || '';
                 
-                let stdListHtml = d.students.map(s => `
-                    <div class="flex justify-between items-center py-2 px-1 border-b border-gray-100 last:border-0 text-xs md:text-sm">
-                        <div class="flex items-center gap-2">
-                            <span class="text-gray-400 w-6 inline-block font-mono text-right">${s.number}.</span>
-                            <span class="font-medium text-gray-700">${s.stdId} | ${s.name}</span>
+                let stdListHtml = d.students.map(s => {
+                    let advisorText = s.teacher || s.advisor || s.teacherName || s.teacher_name || s.advisorName || s.fullname || roomTeacher;
+                    
+                    // Display status badge (checkStatus if available, otherwise submission status)
+                    let statusBadgeHtml = '';
+                    let statusVal = s.checkStatus || s.status || s.regisStatus || '';
+                    
+                    if (statusVal) {
+                        let badgeColor = statusVal === 'ผ่าน' ? 'bg-emerald-100 text-emerald-700 border border-emerald-300' : 
+                                        (statusVal === 'ไม่ผ่าน' ? 'bg-rose-100 text-rose-700 border border-rose-300' : 
+                                        (statusVal === 'ส่งข้อมูลแล้ว' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700 border border-amber-300'));
+                        statusBadgeHtml = `<span class="text-xs px-2.5 py-0.5 rounded-full font-semibold shrink-0 ${badgeColor}">${statusVal}</span>`;
+                    }
+
+                    return `
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center py-2.5 px-2 border-b border-gray-100 last:border-0 text-xs md:text-sm gap-1 sm:gap-2">
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="text-gray-400 w-6 inline-block font-mono text-right shrink-0">${s.number}.</span>
+                            <span class="font-semibold text-gray-800">${s.stdId} | ${s.name}</span>
+                            ${advisorText ? `<span class="text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded-md font-medium border border-purple-200"><i class="fa-solid fa-chalkboard-user mr-1"></i>ครูที่ปรึกษา: ${advisorText}</span>` : ''}
                         </div>
-                        <span class="text-xs px-2.5 py-0.5 rounded-full font-semibold shrink-0 ${s.status === 'ส่งข้อมูลแล้ว' ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}">
-                            ${s.status}
-                        </span>
+                        <div class="flex items-center gap-2 self-end sm:self-auto mt-1 sm:mt-0">
+                            ${statusBadgeHtml}
+                        </div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
 
                 html += `
                     <div class="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-xs">
                         <button onclick="toggleAccordion('acc-${index}')" class="w-full flex justify-between items-center p-4 bg-slate-50 hover:bg-slate-100 transition cursor-pointer text-left">
-                            <span class="font-bold text-gray-800 text-sm md:text-base">${room}</span>
+                            <div>
+                                <span class="font-bold text-gray-800 text-sm md:text-base">${room}</span>
+                                ${roomTeacher ? `<span class="block text-xs text-purple-700 font-medium mt-0.5"><i class="fa-solid fa-chalkboard-user mr-1"></i>ครูที่ปรึกษาประจำห้อง: ${roomTeacher}</span>` : ''}
+                            </div>
                             <div class="flex items-center gap-3">
                                 <div class="w-24 md:w-32 bg-gray-200 rounded-full h-2 hidden sm:block overflow-hidden">
                                     <div class="bg-purple-main h-2 rounded-full" style="width: ${pct}%"></div>
@@ -577,7 +603,7 @@
                                 </span>
                             </div>
                         </button>
-                        <div id="acc-${index}" class="hide p-4 bg-white max-h-64 overflow-y-auto border-t border-slate-100">
+                        <div id="acc-${index}" class="hide p-4 bg-white max-h-72 overflow-y-auto border-t border-slate-100">
                             ${stdListHtml}
                         </div>
                     </div>
@@ -633,14 +659,23 @@
             if(res && res.status === 'success') {
                 if(res.message) Swal.fire('แจ้งเตือน', res.message, 'info');
                 
+                let tName = res.data.name || res.data.teacherName || res.data.teacher_name || res.data.fullname || email;
+                let tRoom = res.data.room || res.data.class || res.data.department || '-';
+
                 if(res.type === 'form') {
                     currentUser = { role: 'teacher', data: res.data };
-                    setupForm({ number: '-', stdId: res.data.email, name: res.data.name, room: res.data.room, image: 'https://placehold.co/100x120/5b21b6/ffffff?text=Teacher' });
+                    setupForm({ 
+                        number: '-', 
+                        stdId: res.data.email || email, 
+                        name: tName, 
+                        room: tRoom, 
+                        image: res.data.image || 'https://placehold.co/100x120/5b21b6/ffffff?text=Teacher' 
+                    });
                 } else {
                     showResultView(res.data);
                 }
             } else if(res) {
-                Swal.fire('เข้าสู่ระบบไม่สำเร็จ', res.message || 'ไมพบข้อมูลบุคลากรในระบบ', 'error');
+                Swal.fire('เข้าสู่ระบบไม่สำเร็จ', res.message || 'ไม่พบข้อมูลบุคลากรในระบบ', 'error');
             }
         }
 
@@ -669,15 +704,15 @@
             document.getElementById('f-image').src = data.image || 'https://placehold.co/100x120/5b21b6/ffffff?text=User';
             document.getElementById('f-id').innerText = data.stdId || '-';
             document.getElementById('f-num').innerText = data.number || '-';
-            document.getElementById('f-name').innerText = data.name || '-';
-            document.getElementById('f-room').innerText = data.room || '-';
+            document.getElementById('f-name').innerText = data.name || data.teacherName || data.teacher_name || '-';
+            document.getElementById('f-room').innerText = data.room || data.class || '-';
             showSection('sec-form');
         }
 
         function showResultView(data) {
             document.getElementById('r-score').innerText = (data.score !== undefined && data.score !== '') ? `${data.score} %` : 'รอการตรวจ';
             const statEl = document.getElementById('r-status');
-            const statusStr = data.checkStatus || 'กำลังตรวจสอบ';
+            const statusStr = data.checkStatus || data.status || data.regisStatus || 'กำลังตรวจสอบ';
             statEl.innerText = statusStr;
             
             if(statusStr === 'ผ่าน') {
@@ -688,12 +723,13 @@
                 statEl.className = 'px-3 py-1 rounded-full text-white text-xs font-semibold bg-amber-500 shadow-sm';
             }
 
-            document.getElementById('r-cert').src = data.certImg || 'https://placehold.co/400x250/f8fafc/64748b?text=No+Certificate+Image';
+            document.getElementById('r-cert').src = data.certImg || data.certFile || 'https://placehold.co/400x250/f8fafc/64748b?text=No+Certificate+Image';
             showSection('sec-result');
         }
 
         async function submitData() {
             const phone = document.getElementById('f-phone').value.trim();
+            const problem = document.getElementById('f-problem').value.trim();
             const scoreFile = document.getElementById('f-scoreFile').files[0];
             const certFile = document.getElementById('f-certFile').files[0];
 
@@ -712,7 +748,7 @@
                 const scoreBase64 = await fileToBase64(scoreFile);
                 const certBase64 = await fileToBase64(certFile);
 
-                let payload = { action: 'submitData', phone: phone, scoreFile: scoreBase64, certFile: certBase64 };
+                let payload = { action: 'submitData', phone: phone, problem: problem, scoreFile: scoreBase64, certFile: certBase64 };
                 
                 if(currentUser.role === 'student') {
                     payload.role = 'student';
@@ -759,6 +795,8 @@
                     const bgClass = isSent ? 'border-emerald-200 bg-emerald-50/40 hover:bg-emerald-50' : 'border-rose-100 bg-rose-50/40 hover:bg-rose-50';
                     const statText = isSent ? 'ส่งข้อมูลแล้ว' : 'ยังไม่ส่งข้อมูล';
                     const statColor = isSent ? 'text-emerald-700' : 'text-rose-500';
+                    const advisorName = std.teacher || std.advisor || std.teacherName || std.teacher_name || std.advisorName || std.fullname || '';
+                    const checkStatusStr = std.regisData?.status || std.checkStatus || std.status || '';
                     
                     const card = document.createElement('div');
                     card.className = `border rounded-2xl p-3.5 flex gap-3 items-center cursor-pointer hover:shadow-md transition ${bgClass}`;
@@ -767,9 +805,13 @@
                         <div class="flex-1 min-w-0">
                             <p class="font-bold text-gray-800 text-sm truncate">${std.name}</p>
                             <p class="text-xs text-gray-500 mt-0.5">เลขที่ ${std.number} | รหัส ${std.stdId}</p>
-                            <p class="text-xs font-semibold mt-1.5 ${statColor} flex items-center gap-1">
-                                <i class="fa-solid ${isSent ? 'fa-check-circle' : 'fa-circle-xmark'}"></i> ${statText}
-                            </p>
+                            ${advisorName ? `<p class="text-xs text-purple-700 font-semibold mt-0.5 truncate"><i class="fa-solid fa-chalkboard-user mr-1"></i>ครูที่ปรึกษา: ${advisorName}</p>` : ''}
+                            <div class="flex items-center gap-2 mt-1.5 flex-wrap">
+                                <span class="text-xs font-semibold ${statColor} flex items-center gap-1">
+                                    <i class="fa-solid ${isSent ? 'fa-check-circle' : 'fa-circle-xmark'}"></i> ${statText}
+                                </span>
+                                ${checkStatusStr ? `<span class="text-[11px] px-2 py-0.5 rounded-full font-semibold ${checkStatusStr === 'ผ่าน' ? 'bg-emerald-100 text-emerald-800' : (checkStatusStr === 'ไม่ผ่าน' ? 'bg-rose-100 text-rose-800' : 'bg-amber-100 text-amber-800')}">${checkStatusStr}</span>` : ''}
+                            </div>
                         </div>
                     `;
                     
@@ -787,12 +829,13 @@
         function openAdminModal(std) {
             currentModalStd = std;
             const d = std.regisData || {};
+            const advisorName = std.teacher || std.advisor || std.teacherName || std.teacher_name || std.advisorName || std.fullname || '-';
             
             let statusSelect = `
                 <select id="m-status" class="modern-input text-sm font-semibold">
-                    <option value="กำลังตรวจสอบ" ${d.status==='กำลังตรวจสอบ'?'selected':''}>กำลังตรวจสอบ</option>
-                    <option value="ผ่าน" ${d.status==='ผ่าน'?'selected':''}>ผ่าน</option>
-                    <option value="ไม่ผ่าน" ${d.status==='ไม่ผ่าน'?'selected':''}>ไม่ผ่าน</option>
+                    <option value="กำลังตรวจสอบ" ${(d.status==='กำลังตรวจสอบ'||std.checkStatus==='กำลังตรวจสอบ')?'selected':''}>กำลังตรวจสอบ</option>
+                    <option value="ผ่าน" ${(d.status==='ผ่าน'||std.checkStatus==='ผ่าน')?'selected':''}>ผ่าน</option>
+                    <option value="ไม่ผ่าน" ${(d.status==='ไม่ผ่าน'||std.checkStatus==='ไม่ผ่าน')?'selected':''}>ไม่ผ่าน</option>
                 </select>
             `;
 
@@ -802,6 +845,7 @@
                     <div>
                         <p class="font-bold text-base text-gray-800">${std.name}</p>
                         <p class="text-xs text-gray-500 mt-0.5">ห้อง ${std.room || '-'} | เลขที่ ${std.number || '-'} | รหัส ${std.stdId || '-'}</p>
+                        <p class="text-xs text-purple-700 font-semibold mt-1"><i class="fa-solid fa-chalkboard-user mr-1"></i> ครูที่ปรึกษา: ${advisorName}</p>
                         <p class="text-xs text-gray-600 mt-1">เบอร์โทรศัพท์: <a href="tel:${d.phone}" class="text-purple-main font-bold underline">${d.phone || '-'}</a></p>
                     </div>
                 </div>
